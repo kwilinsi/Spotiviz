@@ -23,7 +23,7 @@ class SpotifyDownload:
 
         # Set the path for this download
         self.path = path
-        LOG.info('Created download instance at \'{p}\''.format(
+        LOG.debug('Created download instance at \'{p}\''.format(
             p=path
         ))
 
@@ -32,9 +32,9 @@ class SpotifyDownload:
 
         # Validate download and log results
         if self.isValidDownload():
-            LOG.debug('Validated download')
+            LOG.debug('  Validated download')
         else:
-            LOG.warn('Download validation failed: no recognized files')
+            LOG.debug('  Download validation failed: no recognized files')
 
     def __index(self):
         """
@@ -46,7 +46,7 @@ class SpotifyDownload:
         self.files = [(file, fileType.getFileType(file))
                       for file in os.listdir(self.path)]
 
-        LOG.debug('Indexed {c} files'.format(c=len(self.files)))
+        LOG.debug('  Indexed {c} files'.format(c=len(self.files)))
 
     def isValidDownload(self) -> bool:
         """
@@ -80,8 +80,9 @@ class SpotifyDownload:
         """
         Get the full path to a file based on its name. The name is appended
         to the root path of this download instance.
+
         :param file: the name of the file
         :return: the full path to the file
         """
 
-        return self.path + file
+        return os.path.join(self.path, file)
