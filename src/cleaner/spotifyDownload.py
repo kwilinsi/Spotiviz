@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 from src.cleaner import fileType
 from src.utils.log import LOG
@@ -42,11 +43,8 @@ class SpotifyDownload:
         type.
         """
 
-        self.files = []
-        contents = os.listdir(self.path)
-
-        for file in contents:
-            self.files.append((file, fileType.getFileType(file)))
+        self.files = [(file, fileType.getFileType(file))
+                      for file in os.listdir(self.path)]
 
         LOG.debug('Indexed {c} files'.format(c=len(self.files)))
 
@@ -55,7 +53,7 @@ class SpotifyDownload:
         Determine whether this is a valid Spotify Download based on the
         contents of its directory. If it doesn't contain at least one of the
         recognized file types (streaming history, library, etc.) it is not
-        valid, and False is returned. Otherwise, it return True.
+        valid, and False is returned. Otherwise, it returns True.
 
         :return: True if and only if the path associated with this download
         contains at least one recognized Spotify data file.
@@ -67,3 +65,23 @@ class SpotifyDownload:
             if t != fileType.FileType.UNKNOWN:
                 return True
         return False
+
+    def getStreamingHistories(self) -> List[str]:
+        """
+        Filter the list of files associated with this download and return the
+        ones typed as StreamingHistory files.
+        :return: a list of file paths as strings
+        """
+
+        return [self.__getFullPath(f) for (f, t) in self.files
+                if t == fileType.FileType.STREAMING]
+
+    def __getFullPath(self, file) -> str:
+        """
+        Get the full path to a file based on its name. The name is appended
+        to the root path of this download instance.
+        :param file: the name of the file
+        :return: the full path to the file
+        """
+
+        return self.path + file

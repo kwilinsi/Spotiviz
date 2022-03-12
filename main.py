@@ -1,12 +1,11 @@
 from src.cleaner import spotifyDownload
+from src.gui import gui
 
 
 def main():
-    # gui.startGui()
+    gui.startGui()
 
-    path = 'B:\\Spotify\\data\\simon\\simon-1jul20'
 
-    spotifyDownload.SpotifyDownload(path)
 
 
 # Start the program
