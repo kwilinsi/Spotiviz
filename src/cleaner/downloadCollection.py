@@ -89,6 +89,8 @@ class DownloadCollection:
         """
         Iterate through each of the spotify download instances attached to
         this collection. Load each of the streaming history files from each
-        download and compile them all into a single pandas dataframe.
+        download and compile them all into a sqlite database.
         :return:
         """
+
+
