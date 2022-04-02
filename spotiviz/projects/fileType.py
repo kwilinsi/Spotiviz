@@ -6,10 +6,11 @@ PLAYLIST_REGEX = r'^Playlist\d\.json$'
 IDENTITY_REGEX = r'^Identity\.json$'
 LIBRARY_REGEX = r'^YourLibrary\.json$'
 
+
 class FileType(enum.Enum):
     """
-    This class represents the type of a data file from a Spotify download.
-    This is based on the name of the file and is assigned via
+    This class represents the type of some data file from a Spotify download.
+    This is based on the name of the file.
     """
     UNKNOWN = 0
     STREAMING = 1

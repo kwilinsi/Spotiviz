@@ -1,5 +1,4 @@
-from src.cleaner import spotifyDownload
-from src.gui import gui
+from spotiviz.gui import gui
 
 
 def main():

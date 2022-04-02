@@ -1,5 +1,6 @@
 venv/
 .idea/
-data/
+spotiviz/data/
 
 testing.py
+testing
