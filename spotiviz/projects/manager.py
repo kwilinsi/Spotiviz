@@ -5,6 +5,7 @@ from spotiviz.projects import utils as ut
 from spotiviz.utils import db
 from spotiviz.utils import resources as resc
 from spotiviz.utils.log import LOG
+from spotiviz.projects import spotifyDownload as sd
 
 
 def delete_all_projects():
@@ -161,3 +162,19 @@ def clean_streaming_history(project: str):
         conn.execute(sql.CLEAN_STREAMING_HISTORY)
 
     LOG.debug('Cleaned streaming history for project {p}'.format(p=project))
+
+
+def add_download(project: str, path: str, name: str = None):
+    """
+    Create a SpotifyDownload, process it, and save it to the specified
+    project all at once.
+
+    Args:
+        project: the name of the project.
+        path: the path to the directory with the spotify download.
+        name: the name to give the download (or omit to default to the name
+        of the bottom-level directory in the path).
+    """
+
+    d = sd.SpotifyDownload(project, path, name)
+    d.save()

@@ -17,7 +17,7 @@ class SpotifyDownload:
     json files.
     """
 
-    def __init__(self, project: str, path: str):
+    def __init__(self, project: str, path: str, name: str = None):
         """
         Initialize a Spotify download instance by specifying the project to
         which it is attached and the path to a directory containing a single
@@ -33,6 +33,8 @@ class SpotifyDownload:
         Args:
             project: the project to which this download instance is attached.
             path: the path to the Spotify data download.
+            name: the name to assign the download (or omit to set it to the
+            bottom-level directory in the path).
 
         Raises:
             NotADirectoryError: If the path does not point to a valid directory.
@@ -51,6 +53,12 @@ class SpotifyDownload:
 
         self.path = path
         self.project = project
+
+        # Set the download name
+        if name is None:
+            self.name = os.path.basename(path)
+        else:
+            self.name = name
 
         # Index the files in the download for later
         self.__index()
@@ -129,8 +137,8 @@ class SpotifyDownload:
         Add information pertaining to this download to the database for the
         parent project. This includes:
 
-        1. Adding the path to the Spotify download directory to the Downloads
-        table
+        1. Adding the data from this SpotifyDownload to the SQLite
+        Downloads table for the project.
         2. Adding each of the streaming history files to the StreamingHistories
         table.
         3. Adding each of the streams (an individual listen to a song at a
@@ -142,7 +150,7 @@ class SpotifyDownload:
         # Open a connection to the database for the parent project
         with db.get_conn(utils.clean_project_name(self.project)) as conn:
             # Add the path for this Download to the database
-            conn.execute(sql.ADD_DOWNLOAD, (self.path,))
+            conn.execute(sql.ADD_DOWNLOAD, (self.path, self.name))
             download_id = db.get_last_id(conn)
 
             LOG.debug('Project {p} added Download {d}'.format(p=self.project,
@@ -162,14 +170,17 @@ class SpotifyDownload:
 
             # For each of the streaming history files...
             for f in self.__getStreamingHistories():
-                # Add the file name to the database
-                conn.execute(sql.ADD_STREAMING_HISTORY, (download_id, f))
-                history_id = db.get_last_id(conn)
-
                 # Open the streaming file and parse the json
                 file = open(self.__getFullPath(f), encoding='utf-8')
                 j = json.load(file)
                 file.close()
+
+                start_time = j[0]['endTime']
+
+                # Add the file name to the database
+                conn.execute(sql.ADD_STREAMING_HISTORY,
+                             (download_id, f, start_time))
+                history_id = db.get_last_id(conn)
 
                 position = 0
                 # Add each stream from each streaming history file to database
@@ -181,3 +192,7 @@ class SpotifyDownload:
                                                       listen['artistName'],
                                                       listen['trackName'],
                                                       listen['msPlayed']))
+
+            # Set the Download's start time to the minimum start time found
+            # in the streaming history files
+            conn.execute(sql.UPDATE_DOWNLOAD_TIME, (download_id, download_id))

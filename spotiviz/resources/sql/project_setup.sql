@@ -10,8 +10,10 @@ DROP TABLE IF EXISTS StreamingHistory;
 
 CREATE TABLE Downloads
 (
-    id   INTEGER PRIMARY KEY AUTOINCREMENT,
-    path TEXT NOT NULL UNIQUE
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    path       TEXT NOT NULL UNIQUE,
+    name       TEXT NOT NULL,
+    start_time TIMESTAMP
 );
 
 CREATE TABLE StreamingHistories
@@ -19,6 +21,7 @@ CREATE TABLE StreamingHistories
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     download_id INTEGER,
     file_name   TEXT NOT NULL,
+    start_time  TIMESTAMP,
     FOREIGN KEY (download_id) REFERENCES Downloads (id),
     UNIQUE (download_id, file_name)
 );
