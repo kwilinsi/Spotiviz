@@ -7,6 +7,7 @@ from spotiviz.utils import db
 from spotiviz.utils.log import LOG
 from spotiviz.projects import manager
 from spotiviz.projects import utils
+from spotiviz.projects import checks
 
 
 class SpotifyDownload:
@@ -44,8 +45,8 @@ class SpotifyDownload:
         """
 
         # Make sure the project is valid
-        if not manager.is_project_exists(project):
-            raise ValueError('Invalid project name: {p}'.format(p=project))
+
+        checks.enforce_project_exists(project)
 
         # Make sure that the path points to a directory
         if not os.path.isdir(path):

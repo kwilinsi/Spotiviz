@@ -111,8 +111,8 @@ def clean_streaming_history(project: str):
     # Ensure the project exists first
     checks.enforce_project_exists(project)
 
-    with db.get_conn(ut.clean_project_name(project)) as conn:
-        conn.execute(sql.CLEAN_STREAMING_HISTORY)
+    db.run_script(resc.get_sql_resource(sql.CLEAN_STREAMING_HISTORY_SCRIPT),
+                  db.get_conn(ut.clean_project_name(project)))
 
     LOG.debug('Cleaned streaming history for project {p}'.format(p=project))
 

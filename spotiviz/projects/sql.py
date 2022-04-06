@@ -1,5 +1,7 @@
 PROJECT_SETUP_SCRIPT = 'project_setup.sql'
 
+CLEAN_STREAMING_HISTORY_SCRIPT = 'clean_streaming_history.sql'
+
 CHECK_PROJECT_EXISTS = 'SELECT name FROM Projects WHERE name = ?;'
 
 ADD_PROJECT_ENTRY = 'INSERT OR IGNORE INTO Projects (name) VALUES (?);'
@@ -20,19 +22,3 @@ UPDATE_DOWNLOAD_TIME = 'UPDATE Downloads SET start_time = (' \
                        'WHERE download_id = ? ' \
                        'ORDER BY datetime(start_time) LIMIT 1) ' \
                        'WHERE id = ?;'
-
-CLEAN_STREAMING_HISTORY = """
-                        INSERT INTO StreamingHistory
-                        SELECT row_number() over (ORDER BY end_time, 
-                                   position) as position,
-                               end_time,
-                               artist_name,
-                               track_name,
-                               ms_played
-                        FROM (
-                            SELECT *
-                            FROM StreamingHistoryRaw
-                            ORDER BY history_id, position
-                        )
-                        GROUP BY end_time, artist_name, track_name, ms_played;
-                        """
