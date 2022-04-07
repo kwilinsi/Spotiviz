@@ -157,18 +157,6 @@ class SpotifyDownload:
             LOG.debug('Project {p} added Download {d}'.format(p=self.project,
                                                               d=self.path))
 
-            # TODO somehow need to make sure this traverses the streaming
-            #  histories in their chronological order, even if that's not the
-            #  order they were added to the project. A Spotify download from
-            #  December must be processed after one from June.
-            #  Actually, I might even need to add a column to the
-            #  StreamingHistories table with the first date found in that
-            #  streaming history. Then with a left join, I can use that as the
-            #  method of ordering in the big select query that produces the
-            #  StreamingHistory table. Right now it orders based on
-            #  history_id, which is reflective of the order downloads were
-            #  added, and that's problematic.
-
             # For each of the streaming history files...
             for f in self.__getStreamingHistories():
                 # Open the streaming file and parse the json
