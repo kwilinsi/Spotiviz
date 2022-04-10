@@ -77,3 +77,29 @@ CREATE TABLE StreamingHistory
     track_name  TEXT,
     ms_played   INTEGER
 );
+
+/*
+ * The Dates table is used for resolving issues with missing data. It contains
+ * one entry for every date between the very first and very last recorded
+ * listen dates in a project.
+ *
+ * Each date is matched with booleans indicating whether there is any listen
+ * history data present for that date and whether it is known as a missing date.
+ *
+ * Missing dates are defined as those that were not captured by any of the
+ * Spotify downloads associated with a project. Spotify downloads have a
+ * duration of one year (or less if the Spotify account is newer than that).
+ * If one download ends January 1st 2020 and another ends February 1st 2022,
+ * all the dates from 01-02-20 to 01-31-21 will be marked missing, because they
+ * are not captured in either download.
+ *
+ * Note that any entry where is_missing is TRUE should also list has_listen as
+ * FALSE. Having no data doesn't *define* missing data, but missing data should
+ * not have any data.
+ */
+CREATE TABLE Dates
+(
+    date       DATE,
+    has_listen INTEGER NOT NULL CHECK (has_listen IN (0, 1)),
+    is_missing BOOLEAN
+);
