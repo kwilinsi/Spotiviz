@@ -1,6 +1,11 @@
+import os.path
+
+PREPROCESSING_DIR = 'preprocessing'
+
 PROJECT_SETUP_SCRIPT = 'project_setup.sql'
 
-CLEAN_STREAMING_HISTORY_SCRIPT = 'clean_streaming_history.sql'
+CLEAN_STREAMING_HISTORY_SCRIPT = os.path.join(PREPROCESSING_DIR,
+                                              'clean_streaming_history.sql')
 
 CHECK_PROJECT_EXISTS = 'SELECT name FROM Projects WHERE name = ?;'
 
