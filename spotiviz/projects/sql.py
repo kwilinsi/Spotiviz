@@ -32,6 +32,16 @@ UPDATE_DOWNLOAD_TIME = 'UPDATE Downloads SET start_time = (' \
                        'ORDER BY datetime(start_time) LIMIT 1) ' \
                        'WHERE id = ?;'
 
+GET_LAST_END_TIME = 'SELECT MAX(DATE(SHR.end_time)) ' \
+                    'FROM StreamingHistoryRaw SHR ' \
+                    'LEFT JOIN StreamingHistories SH ' \
+                    'ON SHR.history_id = SH.id ' \
+                    'LEFT JOIN Downloads D ON SH.download_id = D.id ' \
+                    'WHERE D.id = ?;'
+
+UPDATE_DOWNLOAD_DATE = 'UPDATE Downloads ' \
+                       'SET download_date = ? WHERE id = ?;'
+
 GET_ALL_INCLUDED_DATES = 'SELECT DATE(end_time) d ' \
                          'FROM StreamingHistory ' \
                          'GROUP BY d ORDER BY d;'

@@ -1,6 +1,7 @@
 import datetime
 import re
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
+from typing import Optional
 
 __DATE_FORMAT = '%Y-%m-%d'
 
@@ -30,7 +31,7 @@ def date_range(start_date: date, end_date: date):
         yield start_date + timedelta(n)
 
 
-def to_date(date_str: str) -> date:
+def to_date(date_str: str) -> Optional[datetime]:
     """
     Convert the given date string to a proper datetime.date instance using the
     format "%Y-%m-%d".
@@ -39,15 +40,18 @@ def to_date(date_str: str) -> date:
         date_str: The date as a string.
 
     Returns:
-        The date as a date object.
+        The date as a date object, or None if the given string is None.
 
     Raises:
         ValueError: If the provided date string fails while parsing to a date
                     object.
     """
 
+    if date_str is None:
+        return None
+
     try:
-        return datetime.datetime.strptime(date_str, __DATE_FORMAT)
+        return datetime.strptime(date_str, __DATE_FORMAT)
     except Exception:
         raise ValueError("Invalid date_str '" + date_str +
                          "' cannot be parsed to a date object.")
@@ -63,11 +67,15 @@ def date_to_str(date_obj: date) -> str:
         date_obj: The date object.
 
     Returns:
-        The date as a formatted string.
+        The date as a formatted string, or an empty string if the given date
+        is null.
 
     Raises:
         ValueError: If there is some error while attempting to format the date.
     """
+
+    if date_obj is None:
+        return ''
 
     try:
         return date_obj.strftime(__DATE_FORMAT)

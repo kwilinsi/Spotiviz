@@ -54,6 +54,8 @@ class SpotifyDownload:
         self.path = path
         self.project = project
         self.date = download_date
+        # Set a temporary download id
+        self.download_id = -1
 
         # Set the download name
         if name is None:
@@ -133,6 +135,48 @@ class SpotifyDownload:
 
         return os.path.join(self.path, file)
 
+    def __set_download_date(self):
+        """
+        Set the download_date associated with this download in the Downloads
+        table. That date should represent the date that the download was
+        requested from Spotify. Typically, it is provided by the user when
+        they create a spotifyDownload object.
+
+        However, it's possible that the provided download_date is wrong,
+        or that no date was given. If the last end_time for this Download is
+        AFTER the user-provided download_date, the user-provided date is
+        obviously wrong. In this case, or if the user simply does not provide
+        a date, the download_date is set to the last recorded end_time from the
+        streaming histories.
+
+        Note that if the last end_time is BEFORE the user-provided
+        download_date, this doesn't mean anything is wrong. The user may
+        simply have not listened to Spotify a few days before requesting
+        their data.
+        """
+
+        with db.get_conn(ut.clean_project_name(self.project)) as conn:
+            # Get the last end_time
+            query = conn.execute(sql.GET_LAST_END_TIME, (self.download_id,))
+            end_date = ut.to_date(query.fetchone()[0])
+
+            if self.date is None:
+                self.date = end_date
+            elif self.date < end_date:
+                LOG.warn(
+                    'User-provided end date {d1} is before last '
+                    'recorded listen date {d2} for download {n}.'.format(
+                        d1=ut.date_to_str(self.date),
+                        d2=ut.date_to_str(end_date),
+                        n=self.name))
+                self.date = end_date
+            else:
+                return
+
+            # If this point is reached, the date changed. Update it in SQL.
+            conn.execute(sql.UPDATE_DOWNLOAD_DATE,
+                         (ut.date_to_str(self.date), self.download_id))
+
     def save(self):
         """
         Add information pertaining to this download to the database for the
@@ -153,7 +197,7 @@ class SpotifyDownload:
             # Add the path for this Download to the database
             conn.execute(sql.ADD_DOWNLOAD, (self.path, self.name,
                                             ut.date_to_str(self.date)))
-            download_id = db.get_last_id(conn)
+            self.download_id = db.get_last_id(conn)
 
             LOG.debug('Project {p} added Download {d}'.format(p=self.project,
                                                               d=self.path))
@@ -169,7 +213,7 @@ class SpotifyDownload:
 
                 # Add the file name to the database
                 conn.execute(sql.ADD_STREAMING_HISTORY,
-                             (download_id, f, start_time))
+                             (self.download_id, f, start_time))
                 history_id = db.get_last_id(conn)
 
                 position = 0
@@ -185,4 +229,8 @@ class SpotifyDownload:
 
             # Set the Download's start time to the minimum start time found
             # in the streaming history files
-            conn.execute(sql.UPDATE_DOWNLOAD_TIME, (download_id, download_id))
+            conn.execute(sql.UPDATE_DOWNLOAD_TIME,
+                         (self.download_id, self.download_id))
+
+        # Validate/set the download date
+        self.__set_download_date()
