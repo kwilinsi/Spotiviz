@@ -1,4 +1,4 @@
-import datetime
+from datetime import date
 import os.path
 
 from spotiviz import get_data
@@ -10,9 +10,6 @@ from spotiviz.utils import resources as resc
 from spotiviz.utils.log import LOG
 from spotiviz.projects import spotifyDownload as sd
 from spotiviz.projects import preprocess
-
-# This format is used for storing dates in the SQLite database
-DATE_FORMAT = '%Y-%m-%d'
 
 
 def delete_all_projects():
@@ -119,44 +116,19 @@ def preprocess_data(project: str):
     preprocess.main(project)
 
 
-def add_download(project: str, path: str, name: str = None):
+def add_download(project: str, path: str,
+                 name: str = None, download_date: date = None):
     """
     Create a SpotifyDownload, process it, and save it to the specified
     project all at once.
 
     Args:
-        project: the name of the project.
-        path: the path to the directory with the spotify download.
-        name: the name to give the download (or omit to default to the name
-        of the bottom-level directory in the path).
+        project: The name of the project.
+        path: The path to the directory with the spotify download.
+        name: The name to give the download (or omit to default to the name
+              of the bottom-level directory in the path).
+        download_date: The date that the download was requested from Spotify.
     """
 
-    d = sd.SpotifyDownload(project, path, name)
+    d = sd.SpotifyDownload(project, path, name, download_date)
     d.save()
-
-
-def __populate_dates(project: str):
-    """
-    This populates the Dates table with a list of every day between the first
-    and last date found in the StreamingHistoryRaw table.
-
-    Args:
-        project: The name of the project. (Must be valid; not checked).
-    """
-
-    with db.get_conn(ut.clean_project_name(project)) as conn:
-        # Get a list of all the dates for which there is listening history
-        dates_incl = [
-            datetime.datetime.strptime(f[0], DATE_FORMAT)
-            for f in conn.execute(sql.GET_ALL_INCLUDED_DATES)
-        ]
-
-        # Get the first and last date with listening history
-        first_date = dates_incl[0]
-        last_date = dates_incl[-1]
-
-        # Add every date from first to last date to the Dates table
-        for date in ut.date_range(first_date,
-                                  last_date + datetime.timedelta(days=1)):
-            conn.execute(sql.ADD_DATE, (date.strftime(DATE_FORMAT),
-                                        date in dates_incl))

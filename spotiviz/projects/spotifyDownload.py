@@ -3,12 +3,9 @@ import os
 from typing import List
 from datetime import date
 
-from spotiviz.projects import fileType as ft, sql
 from spotiviz.utils import db
 from spotiviz.utils.log import LOG
-from spotiviz.projects import manager
-from spotiviz.projects import utils
-from spotiviz.projects import checks
+from spotiviz.projects import manager, checks, sql, utils as ut, fileType as ft
 
 
 class SpotifyDownload:
@@ -152,9 +149,10 @@ class SpotifyDownload:
         """
 
         # Open a connection to the database for the parent project
-        with db.get_conn(utils.clean_project_name(self.project)) as conn:
+        with db.get_conn(ut.clean_project_name(self.project)) as conn:
             # Add the path for this Download to the database
-            conn.execute(sql.ADD_DOWNLOAD, (self.path, self.name, self.date))
+            conn.execute(sql.ADD_DOWNLOAD, (self.path, self.name,
+                                            ut.date_to_str(self.date)))
             download_id = db.get_last_id(conn)
 
             LOG.debug('Project {p} added Download {d}'.format(p=self.project,

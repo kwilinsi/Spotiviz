@@ -69,8 +69,7 @@ def get_dates(project: str):
     with db.get_conn(ut.clean_project_name(project)) as conn:
         # Get a list of all the dates for which there is listening history
         dates_incl = [
-            datetime.datetime.strptime(f[0], DATE_FORMAT)
-            for f in conn.execute(sql.GET_ALL_INCLUDED_DATES)
+            ut.to_date(f[0]) for f in conn.execute(sql.GET_ALL_INCLUDED_DATES)
         ]
 
         # Get the first and last date with listening history
@@ -80,5 +79,5 @@ def get_dates(project: str):
         # Add every date from first to last date to the Dates table
         for d in ut.date_range(first_date,
                                last_date + datetime.timedelta(days=1)):
-            conn.execute(sql.ADD_DATE, (d.strftime(DATE_FORMAT),
+            conn.execute(sql.ADD_DATE, (ut.date_to_str(d),
                                         d in dates_incl))
