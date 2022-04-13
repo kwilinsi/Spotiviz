@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 import re
 
 
@@ -19,3 +20,18 @@ def clean_project_name(name: str) -> str:
 
     n = name.lower()
     return re.sub(r'[^\w-]', '', n[:-3] if n.endswith('.db') else n) + '.db'
+
+
+def date_range(start_date: date, end_date: date):
+    """
+    Get an iterator over every date between the given start and end date.
+
+    Args:
+        start_date: The first date (inclusive).
+        end_date: The last date (inclusive).
+
+    Returns: An iterator over every date in the given range.
+
+    """
+    for n in range(int((end_date - start_date).days)):
+        yield start_date + timedelta(n)

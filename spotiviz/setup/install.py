@@ -21,6 +21,9 @@ def install_spotiviz():
     make_dir(get_data('sqlite'), 'SQLite')
     make_dir(get_data(os.path.join('sqlite', 'projects')), 'Projects')
 
+    # Delete the program database, if it exists
+
+
     # Run installation script
     LOG.debug('Running installation script')
     db.run_script(re.get_sql_resource(sql.SCRIPT_SETUP))

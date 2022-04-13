@@ -1,6 +1,6 @@
 import os.path
 from spotiviz import get_data
-from spotiviz.projects import sql
+from spotiviz.projects import sql, preprocess
 from spotiviz.projects import utils as ut
 from spotiviz.projects import checks
 from spotiviz.utils import db
@@ -95,11 +95,10 @@ def create_project_database(name: str):
                   db.get_conn(ut.clean_project_name(name)))
 
 
-def clean_streaming_history(project: str):
+def preprocess_data(project: str):
     """
-    Clean the streaming history in the database of the specified project.
-    This entails iterating through the data in the StreamingHistoryRaw table,
-    removing duplicates, and transferring it to the StreamingHistory table.
+    First, check to make sure that a project with the specified name
+    actually exists. If it does call the main preprocessing function.
 
     Args:
         project: The name of the project.
@@ -111,10 +110,8 @@ def clean_streaming_history(project: str):
     # Ensure the project exists first
     checks.enforce_project_exists(project)
 
-    db.run_script(resc.get_sql_resource(sql.CLEAN_STREAMING_HISTORY_SCRIPT),
-                  db.get_conn(ut.clean_project_name(project)))
+    preprocess.main(project)
 
-    LOG.debug('Cleaned streaming history for project {p}'.format(p=project))
 
 
 def add_download(project: str, path: str, name: str = None):

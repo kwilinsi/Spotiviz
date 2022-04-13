@@ -7,7 +7,7 @@ DROP TABLE IF EXISTS Downloads;
 DROP TABLE IF EXISTS StreamingHistories;
 DROP TABLE IF EXISTS StreamingHistoryRaw;
 DROP TABLE IF EXISTS StreamingHistory;
-DROP TABLE IF EXISTS Dates;
+DROP TABLE IF EXISTS ListenDates;
 
 /*
  * The Downloads table contains a list of Spotify downloads.
@@ -98,9 +98,9 @@ CREATE TABLE StreamingHistory
  * FALSE. Having no data doesn't *define* missing data, but missing data should
  * not have any data.
  */
-CREATE TABLE Dates
+CREATE TABLE ListenDates
 (
     date       DATE,
-    has_listen INTEGER NOT NULL CHECK (has_listen IN (0, 1)),
+    has_listen INTEGER CHECK (has_listen IN (0, 1)),
     is_missing BOOLEAN
 );

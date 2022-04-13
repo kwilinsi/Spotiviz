@@ -27,3 +27,9 @@ UPDATE_DOWNLOAD_TIME = 'UPDATE Downloads SET start_time = (' \
                        'WHERE download_id = ? ' \
                        'ORDER BY datetime(start_time) LIMIT 1) ' \
                        'WHERE id = ?;'
+
+CALCULATE_MIN_DATE = 'SELECT DATE(MIN(end_time)) FROM StreamingHistory;'
+
+CALCULATE_MAX_DATE = 'SELECT DATE(MAX(end_time)) FROM StreamingHistory;'
+
+ADD_DATE = 'INSERT INTO ListenDates (date) VALUES (?);'
