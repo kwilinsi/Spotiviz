@@ -7,6 +7,9 @@ PROJECT_SETUP_SCRIPT = 'project_setup.sql'
 CLEAN_STREAMING_HISTORY_SCRIPT = os.path.join(PREPROCESSING_DIR,
                                               'clean_streaming_history.sql')
 
+CORRECT_DATE_ANOMALIES_SCRIPT = os.path.join(PREPROCESSING_DIR,
+                                             'correct_date_anomalies.sql')
+
 CHECK_PROJECT_EXISTS = 'SELECT name FROM Projects WHERE name = ?;'
 
 ADD_PROJECT_ENTRY = 'INSERT OR IGNORE INTO Projects (name) VALUES (?);'
@@ -29,8 +32,15 @@ UPDATE_DOWNLOAD_TIME = 'UPDATE Downloads SET start_time = (' \
                        'ORDER BY datetime(start_time) LIMIT 1) ' \
                        'WHERE id = ?;'
 
-GET_ALL_INCLUDED_DATES = 'SELECT DATE(end_time) date ' \
-                         'FROM StreamingHistoryRaw ' \
-                         'GROUP BY date ORDER BY date;'
+GET_ALL_INCLUDED_DATES = 'SELECT DATE(end_time) d ' \
+                         'FROM StreamingHistory ' \
+                         'GROUP BY d ORDER BY d;'
 
 ADD_DATE = 'INSERT INTO ListenDates (day, has_listen) VALUES (?, ?);'
+
+GET_DOWNLOAD_DATES = 'SELECT DATE(download_date) FROM Downloads;'
+
+GET_ALL_DATES = 'SELECT day FROM ListenDates;'
+
+UPDATE_DATE_MISSING_STATUS = 'UPDATE ListenDates ' \
+                             'SET is_missing = ? WHERE day = ?;'
