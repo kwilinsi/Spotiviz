@@ -13,7 +13,8 @@ ADD_PROJECT_ENTRY = 'INSERT OR IGNORE INTO Projects (name) VALUES (?);'
 
 CLEAR_ALL_PROJECTS = 'DELETE FROM Projects WHERE TRUE;'
 
-ADD_DOWNLOAD = 'INSERT OR IGNORE INTO Downloads (path, name) VALUES (?, ?);'
+ADD_DOWNLOAD = 'INSERT OR IGNORE INTO Downloads (path, name, download_date) ' \
+               'VALUES (?, ?, ?);'
 
 ADD_STREAMING_HISTORY = 'INSERT OR IGNORE INTO StreamingHistories (' \
                         'download_id, file_name, start_time) VALUES (?, ?, ?);'
@@ -32,4 +33,8 @@ CALCULATE_MIN_DATE = 'SELECT DATE(MIN(end_time)) FROM StreamingHistory;'
 
 CALCULATE_MAX_DATE = 'SELECT DATE(MAX(end_time)) FROM StreamingHistory;'
 
-ADD_DATE = 'INSERT INTO ListenDates (date) VALUES (?);'
+GET_ALL_INCLUDED_DATES = 'SELECT DATE(end_time) date ' \
+                         'FROM StreamingHistoryRaw ' \
+                         'GROUP BY date ORDER BY date;'
+
+ADD_DATE = 'INSERT INTO ListenDates (day, has_listen) VALUES (?, ?);'

@@ -45,10 +45,8 @@ def get_conn(file: str = None) -> sqlite3.Connection:
         return sqlite3.connect(
             get_data(os.path.join('sqlite', sql.DATABASE_PROGRAM_NAME)))
     else:
-        path = get_data(os.path.join(
-            'sqlite', 'projects', file))
-        print('path =', path)
-        return sqlite3.connect(path)
+        return sqlite3.connect(
+            get_data(os.path.join('sqlite', 'projects', file)))
 
 
 def get_last_id(conn: sqlite3.Connection) -> int:

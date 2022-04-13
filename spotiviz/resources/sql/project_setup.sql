@@ -17,10 +17,11 @@ DROP TABLE IF EXISTS ListenDates;
  */
 CREATE TABLE Downloads
 (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    path       TEXT NOT NULL UNIQUE,
-    name       TEXT NOT NULL,
-    start_time TIMESTAMP
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    path          TEXT NOT NULL UNIQUE,
+    name          TEXT NOT NULL,
+    start_time    TIMESTAMP,
+    download_date DATE
 );
 
 /*
@@ -100,7 +101,7 @@ CREATE TABLE StreamingHistory
  */
 CREATE TABLE ListenDates
 (
-    date       DATE,
+    day        DATE,
     has_listen INTEGER CHECK (has_listen IN (0, 1)),
     is_missing BOOLEAN
 );

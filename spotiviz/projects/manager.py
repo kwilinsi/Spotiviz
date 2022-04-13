@@ -1,12 +1,17 @@
 import os.path
+
 from spotiviz import get_data
-from spotiviz.projects import sql, preprocess
+from spotiviz.projects import sql
 from spotiviz.projects import utils as ut
 from spotiviz.projects import checks
 from spotiviz.utils import db
 from spotiviz.utils import resources as resc
 from spotiviz.utils.log import LOG
 from spotiviz.projects import spotifyDownload as sd
+from spotiviz.projects import preprocess
+
+# This format is used for storing dates in the SQLite database
+DATE_FORMAT = '%Y-%m-%d'
 
 
 def delete_all_projects():
@@ -111,7 +116,6 @@ def preprocess_data(project: str):
     checks.enforce_project_exists(project)
 
     preprocess.main(project)
-
 
 
 def add_download(project: str, path: str, name: str = None):
