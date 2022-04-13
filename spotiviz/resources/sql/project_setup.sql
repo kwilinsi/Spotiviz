@@ -17,10 +17,11 @@ DROP TABLE IF EXISTS Dates;
  */
 CREATE TABLE Downloads
 (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    path       TEXT NOT NULL UNIQUE,
-    name       TEXT NOT NULL,
-    start_time TIMESTAMP
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    path          TEXT NOT NULL UNIQUE,
+    name          TEXT NOT NULL,
+    start_time    TIMESTAMP,
+    download_date DATE
 );
 
 /*
