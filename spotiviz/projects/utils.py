@@ -1,4 +1,5 @@
 import re
+from datetime import date, timedelta
 
 
 def clean_project_name(name: str) -> str:
@@ -19,3 +20,8 @@ def clean_project_name(name: str) -> str:
 
     n = name.lower()
     return re.sub(r'[^\w-]', '', n[:-3] if n.endswith('.db') else n) + '.db'
+
+
+def date_range(start_date: date, end_date: date):
+    for n in range(int((end_date - start_date).days)):
+        yield start_date + timedelta(n)

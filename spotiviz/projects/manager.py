@@ -1,3 +1,4 @@
+import datetime
 import os.path
 from spotiviz import get_data
 from spotiviz.projects import sql
@@ -7,6 +8,9 @@ from spotiviz.utils import db
 from spotiviz.utils import resources as resc
 from spotiviz.utils.log import LOG
 from spotiviz.projects import spotifyDownload as sd
+
+# This format is used for storing dates in the SQLite database
+DATE_FORMAT = '%Y-%m-%d'
 
 
 def delete_all_projects():
@@ -111,6 +115,8 @@ def clean_streaming_history(project: str):
     # Ensure the project exists first
     checks.enforce_project_exists(project)
 
+    __populate_dates(project)
+
     db.run_script(resc.get_sql_resource(sql.CLEAN_STREAMING_HISTORY_SCRIPT),
                   db.get_conn(ut.clean_project_name(project)))
 
@@ -131,3 +137,30 @@ def add_download(project: str, path: str, name: str = None):
 
     d = sd.SpotifyDownload(project, path, name)
     d.save()
+
+
+def __populate_dates(project: str):
+    """
+    This populates the Dates table with a list of every day between the first
+    and last date found in the StreamingHistoryRaw table.
+
+    Args:
+        project: The name of the project. (Must be valid; not checked).
+    """
+
+    with db.get_conn(ut.clean_project_name(project)) as conn:
+        # Get a list of all the dates for which there is listening history
+        dates_incl = [
+            datetime.datetime.strptime(f[0], DATE_FORMAT)
+            for f in conn.execute(sql.GET_ALL_INCLUDED_DATES)
+        ]
+
+        # Get the first and last date with listening history
+        first_date = dates_incl[0]
+        last_date = dates_incl[-1]
+
+        # Add every date from first to last date to the Dates table
+        for date in ut.date_range(first_date,
+                                  last_date + datetime.timedelta(days=1)):
+            conn.execute(sql.ADD_DATE, (date.strftime(DATE_FORMAT),
+                                        date in dates_incl))

@@ -27,3 +27,9 @@ UPDATE_DOWNLOAD_TIME = 'UPDATE Downloads SET start_time = (' \
                        'WHERE download_id = ? ' \
                        'ORDER BY datetime(start_time) LIMIT 1) ' \
                        'WHERE id = ?;'
+
+GET_ALL_INCLUDED_DATES = 'SELECT DATE(end_time) date ' \
+                         'FROM StreamingHistoryRaw ' \
+                         'GROUP BY date ORDER BY date;'
+
+ADD_DATE = 'INSERT INTO Dates (day, has_listen) VALUES (?, ?);'
