@@ -81,9 +81,9 @@ CREATE TABLE StreamingHistory
 );
 
 /*
- * The Dates table is used for resolving issues with missing data. It contains
- * one entry for every date between the very first and very last recorded
- * listen dates in a project.
+ * The ListenDates table is used for resolving issues with missing data. It
+ * contains one entry for every date between the very first and very last
+ * recorded listen dates in a project.
  *
  * Each date is matched with booleans indicating whether there is any listen
  * history data present for that date and whether it is known as a missing date.
@@ -99,7 +99,7 @@ CREATE TABLE StreamingHistory
  * FALSE. Having no data doesn't *define* missing data, but missing data should
  * not have any data.
  */
-CREATE TABLE Dates
+CREATE TABLE ListenDates
 (
     day        DATE,
     has_listen INTEGER NOT NULL CHECK (has_listen IN (0, 1)),

@@ -33,4 +33,4 @@ GET_ALL_INCLUDED_DATES = 'SELECT DATE(end_time) date ' \
                          'FROM StreamingHistoryRaw ' \
                          'GROUP BY date ORDER BY date;'
 
-ADD_DATE = 'INSERT INTO Dates (day, has_listen) VALUES (?, ?);'
+ADD_DATE = 'INSERT INTO ListenDates (day, has_listen) VALUES (?, ?);'
