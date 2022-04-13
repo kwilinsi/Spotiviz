@@ -100,7 +100,7 @@ CREATE TABLE StreamingHistory
  */
 CREATE TABLE Dates
 (
-    day       DATE,
+    day        DATE,
     has_listen INTEGER NOT NULL CHECK (has_listen IN (0, 1)),
     is_missing BOOLEAN
 );
