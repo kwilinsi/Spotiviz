@@ -41,7 +41,8 @@ def main(project: str):
 
     # Clean the streaming history
     LOG.debug('  Cleaning streaming history...')
-    clean_streaming_history(project)
+    db.run_script(resc.get_sql_resource(sql.CLEAN_STREAMING_HISTORY_SCRIPT),
+                  db.get_conn(ut.clean_project_name(project)))
 
     # Set the list of dates
     LOG.debug('  Listing dates...')
@@ -53,20 +54,6 @@ def main(project: str):
 
     # Correct date anomalies
     LOG.debug('  Correcting date anomalies...')
-    db.run_script(resc.get_sql_resource(sql.CLEAN_STREAMING_HISTORY_SCRIPT),
-                  db.get_conn(ut.clean_project_name(project)))
-
-
-def clean_streaming_history(project: str):
-    """
-    Run the script that cleans the streaming history, copying it from the
-    StreamingHistoryRaw table to the StreamingHistory table and removing
-    duplicate entries.
-
-    Args:
-        project: the name of the project (MUST be valid)
-    """
-
     db.run_script(resc.get_sql_resource(sql.CLEAN_STREAMING_HISTORY_SCRIPT),
                   db.get_conn(ut.clean_project_name(project)))
 
