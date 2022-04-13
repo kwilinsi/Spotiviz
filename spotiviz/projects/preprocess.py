@@ -30,6 +30,10 @@ def main(project: str):
        the listening history range for any of the downloads in the project,
        and label them accordingly.
 
+    4. Look for any date anomalies, where a date was marked as has_listen =
+       TRUE and is_missing = TRUE. Obviously, it can't be both missing and
+       have a listen recorded, so is_missing is set to FALSE in these cases.
+
     Precondition:
         The given project name MUST be valid, as it is not checked.
 
