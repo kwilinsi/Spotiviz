@@ -1,10 +1,8 @@
 import datetime
 
-from spotiviz.utils import db
-from spotiviz.utils import resources as resc
-from spotiviz.projects import sql
-from spotiviz.projects import utils as ut
+from spotiviz.utils import db, resources as resc
 from spotiviz.utils.log import LOG
+from spotiviz.projects import sql, utils as ut
 
 # This format is used for storing dates in the SQLite database
 DATE_FORMAT = '%Y-%m-%d'

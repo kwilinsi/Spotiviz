@@ -1,11 +1,9 @@
 import os.path
 
 from spotiviz import get_data
-from spotiviz.projects import manager
 from spotiviz.utils import db
 from spotiviz.utils.log import LOG
-from spotiviz.projects import utils as ut
-from spotiviz.projects import sql
+from spotiviz.projects import manager, sql, utils as ut
 
 
 def enforce_project_exists(project: str):
