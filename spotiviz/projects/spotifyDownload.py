@@ -1,6 +1,7 @@
 import json
 import os
 from typing import List
+from datetime import date
 
 from spotiviz.projects import fileType as ft, sql
 from spotiviz.utils import db
@@ -18,7 +19,8 @@ class SpotifyDownload:
     json files.
     """
 
-    def __init__(self, project: str, path: str, name: str = None):
+    def __init__(self, project: str, path: str, name: str = None,
+                 download_date: date = None):
         """
         Initialize a Spotify download instance by specifying the project to
         which it is attached and the path to a directory containing a single
@@ -54,6 +56,7 @@ class SpotifyDownload:
 
         self.path = path
         self.project = project
+        self.date = download_date
 
         # Set the download name
         if name is None:
@@ -151,7 +154,7 @@ class SpotifyDownload:
         # Open a connection to the database for the parent project
         with db.get_conn(utils.clean_project_name(self.project)) as conn:
             # Add the path for this Download to the database
-            conn.execute(sql.ADD_DOWNLOAD, (self.path, self.name))
+            conn.execute(sql.ADD_DOWNLOAD, (self.path, self.name, self.date))
             download_id = db.get_last_id(conn)
 
             LOG.debug('Project {p} added Download {d}'.format(p=self.project,
