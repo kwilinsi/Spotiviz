@@ -13,7 +13,8 @@ ADD_PROJECT_ENTRY = 'INSERT OR IGNORE INTO Projects (name) VALUES (?);'
 
 CLEAR_ALL_PROJECTS = 'DELETE FROM Projects WHERE TRUE;'
 
-ADD_DOWNLOAD = 'INSERT OR IGNORE INTO Downloads (path, name) VALUES (?, ?);'
+ADD_DOWNLOAD = 'INSERT OR IGNORE INTO Downloads (path, name, download_date) ' \
+               'VALUES (?, ?, ?);'
 
 ADD_STREAMING_HISTORY = 'INSERT OR IGNORE INTO StreamingHistories (' \
                         'download_id, file_name, start_time) VALUES (?, ?, ?);'
