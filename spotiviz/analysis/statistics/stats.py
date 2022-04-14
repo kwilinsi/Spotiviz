@@ -117,7 +117,7 @@ def get_stats(connection: sqlite3.Connection) -> Iterable[Tuple[str, object]]:
             yield name, proj_ut.to_date(result)
 
 
-def get_stat_summary(project: str) -> Dict:
+def get_stats_dict(project: str) -> Dict:
     """
     Calculate a series of summary statistics for a given project, and return
     it as a dictionary.
