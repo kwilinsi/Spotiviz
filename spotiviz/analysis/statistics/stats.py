@@ -1,10 +1,11 @@
 from enum import Enum
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Dict
 import os.path
 import sqlite3
 
 from spotiviz.analysis.statistics import utils as ut
-from spotiviz.projects import utils as proj_ut
+from spotiviz.utils import db
+from spotiviz.projects import checks, utils as proj_ut
 
 
 class StatType(Enum):
@@ -114,3 +115,32 @@ def get_stats(connection: sqlite3.Connection) -> Iterable[Tuple[str, object]]:
             yield name, float(result)
         elif stat_type == StatType.DATE:
             yield name, proj_ut.to_date(result)
+
+
+def get_stat_summary(project: str) -> Dict:
+    """
+    Calculate a series of summary statistics for a given project, and return
+    it as a dictionary.
+
+    Args:
+        project: The project to calculate statistics for.
+
+    Returns:
+        None
+
+    Raises:
+        ValueError: If the given project name is invalid or the project
+                    doesn't exist.
+    """
+
+    # Ensure the project exists first
+    checks.enforce_project_exists(project)
+
+    # Create the statistics dictionary
+    s = dict()
+
+    with db.get_conn(proj_ut.clean_project_name(project)) as conn:
+        for name, value in get_stats(conn):
+            s[name] = value
+
+    return s

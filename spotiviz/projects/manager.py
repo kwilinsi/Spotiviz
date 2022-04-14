@@ -1,13 +1,12 @@
 from datetime import date
 import os.path
-from typing import List, Tuple, Dict
+from typing import List, Tuple
 
 from spotiviz import get_data
 from spotiviz.projects import \
     sql, preprocess, checks, utils as ut, spotifyDownload as sd
 from spotiviz.utils import db, resources as resc
 from spotiviz.utils.log import LOG
-from spotiviz.analysis.statistics import stats
 
 
 def delete_all_projects() -> None:
@@ -175,32 +174,3 @@ def build_project(project: str, root_dir: str,
                      download_date=ut.to_date(d))
 
     preprocess_data(project)
-
-
-def get_stat_summary(project: str) -> Dict:
-    """
-    Calculate a series of summary statistics for a given project, and return
-    it as a dictionary.
-
-    Args:
-        project: The project to calculate statistics for.
-
-    Returns:
-        None
-
-    Raises:
-        ValueError: If the given project name is invalid or the project
-                    doesn't exist.
-    """
-
-    # Ensure the project exists first
-    checks.enforce_project_exists(project)
-
-    # Create the statistics dictionary
-    s = dict()
-
-    with db.get_conn(ut.clean_project_name(project)) as conn:
-        for name, value in stats.get_stats(conn):
-            s[name] = value
-
-    return s
