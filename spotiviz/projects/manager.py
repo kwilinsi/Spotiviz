@@ -1,5 +1,6 @@
 from datetime import date
 import os.path
+from typing import List, Tuple
 
 from spotiviz import get_data
 from spotiviz.projects import sql
@@ -132,3 +133,25 @@ def add_download(project: str, path: str,
 
     d = sd.SpotifyDownload(project, path, name, download_date)
     d.save()
+
+
+def build_project(project: str, root_dir: str, paths: List[Tuple[str, str]]):
+    """
+    Create a new project with the specified name. Then bulk add downloads to
+    it, saving both the download information and the streaming histories.
+    Then clean the streaming histories, merging them into one file.
+
+    Args:
+        project: The project.
+        root_dir: The root directory in which all the paths can be found.
+        paths: A list of tuples for each downloads to add to the project.
+               Each tuple should be the path to a download within the root_dir
+               and the date the download was requested from Spotify.
+    """
+
+    create_project(project)
+    for path, d in paths:
+        add_download(project, os.path.join(root_dir, path),
+                     download_date=ut.to_date(d))
+
+    preprocess_data(project)
