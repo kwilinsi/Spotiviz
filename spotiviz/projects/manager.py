@@ -14,7 +14,7 @@ def delete_all_projects() -> None:
     Attempt to delete all the current projects. This performs two functions
     for each project:
 
-    1. It removes each of their sqlite database files
+    1. It removes each of their SQLite database files.
     2. It removes their entries in the global, program-level sqlite database
     that lists all their programs.
 
