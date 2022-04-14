@@ -1,3 +1,4 @@
+import collections
 import datetime
 import re
 from datetime import date, timedelta, datetime
@@ -30,7 +31,7 @@ def clean_project_name(name: str) -> str:
     return re.sub(r'[^\w-]', '', n[:-3] if n.endswith('.db') else n) + '.db'
 
 
-def date_range(start_date: date, end_date: date) -> date:
+def date_range(start_date: date, end_date: date) -> collections.Iterable[date]:
     """
     Yields individual dates through an iterator in a range from the start to
     ending dates, similar to the range() function.

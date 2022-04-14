@@ -55,13 +55,15 @@ INSERT INTO StreamingHistory
 WITH Merged AS (
     WITH SH AS (
         SELECT S.id,
-               row_number() over (ORDER BY datetime(S.start_time), datetime(D.start_time)) as strm_hist_pos
+               row_number() over
+                   (ORDER BY datetime(S.start_time), datetime(D.start_time))
+                   as strm_hist_pos1
         FROM StreamingHistories S
                  LEFT JOIN Downloads D on S.download_id = D.id
     )
 
     SELECT *,
-           strm_hist_pos
+           strm_hist_pos1 as strm_hist_pos
     FROM StreamingHistoryRaw
              LEFT JOIN SH on StreamingHistoryRaw.history_id = SH.id
     ORDER BY history_id, position
