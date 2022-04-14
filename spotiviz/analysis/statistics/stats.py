@@ -115,7 +115,7 @@ class Statistic(Enum):
     )
 
 
-def get_stats(connection: sqlite3.Connection) -> Iterable[Tuple[str,
+def get_stats(connection: sqlite3.Connection) -> Iterable[Tuple[StatType,
                                                                 object,
                                                                 StatUnit]]:
     """
@@ -127,7 +127,7 @@ def get_stats(connection: sqlite3.Connection) -> Iterable[Tuple[str,
                     each of the statistic queries.
 
     Returns:
-        The path and value for each statistic.
+        The Statistic enum, along with the value and unit for each statistic.
     """
 
     for s in Statistic:
@@ -136,11 +136,11 @@ def get_stats(connection: sqlite3.Connection) -> Iterable[Tuple[str,
             result = connection.execute(p.read()).fetchone()[0]
 
         if stat_type == StatType.INT:
-            yield name, int(result), unit
+            yield s, int(result), unit
         elif stat_type == StatType.FLOAT:
-            yield name, float(result), unit
+            yield s, float(result), unit
         elif stat_type == StatType.DATE:
-            yield name, proj_ut.to_date(result), unit
+            yield s, proj_ut.to_date(result), unit
 
 
 def get_stats_dict(project: str) -> Dict:
@@ -152,7 +152,8 @@ def get_stats_dict(project: str) -> Dict:
         project: The project to calculate statistics for.
 
     Returns:
-        None
+        A dictionary of paired statistics, with StatType enums as keys,
+        and value-unit tuple pairs as values.
 
     Raises:
         ValueError: If the given project name is invalid or the project
@@ -166,8 +167,8 @@ def get_stats_dict(project: str) -> Dict:
     s = dict()
 
     with db.get_conn(proj_ut.clean_project_name(project)) as conn:
-        for name, value, unit in get_stats(conn):
-            s[name] = (value, unit)
+        for stat_type, value, unit in get_stats(conn):
+            s[stat_type] = (value, unit)
 
     return s
 
@@ -188,7 +189,9 @@ def print_stats(project: str, stats_dict: Dict) -> None:
     """
 
     print('Project:', project)
+    print('Summary Statistics')
     print()
+
     for s in stats_dict:
         value, unit = stats_dict[s]
         if type(value) is datetime.datetime:
@@ -196,4 +199,4 @@ def print_stats(project: str, stats_dict: Dict) -> None:
         else:
             v = str(value)
 
-        print('{stat}: {val} {u}'.format(stat=s, val=v, u=unit.value))
+        print('{stat}: {val} {u}'.format(stat=s.value[0], val=v, u=unit.value))
