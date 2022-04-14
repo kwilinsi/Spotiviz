@@ -42,7 +42,8 @@ def create_project(name: str):
     Create a new project. Add it to the main program database file,
     and create a new database specifically for this project.
 
-    :param name: the name of the project
+    Args:
+        name: the name of the project
     """
 
     # Check for preexistence of a project with this name

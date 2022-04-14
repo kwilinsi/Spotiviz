@@ -34,8 +34,11 @@ def does_project_exist(name: str) -> bool:
     Note that the name is case in-sensitive and ignores some characters. See
     clean_project_name() for more information on this behaviour.
 
-    :param name: the name of the project to check
-    :return: true if project exists
+    Args:
+        name: The name of the project to check.
+
+    Returns:
+        True if project exists; otherwise False.
     """
 
     # TODO I suspect this doesn't work if one project 'abC d' is created and

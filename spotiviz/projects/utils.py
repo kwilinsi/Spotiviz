@@ -19,8 +19,11 @@ def clean_project_name(name: str) -> str:
     This also adds .db to the file name if it was not there initially. Note
     that this is the only . that is allowed in the returned string.
 
-    :param name: the name to clean
-    :return: the cleaned name
+    Args:
+        name: The name to clean.
+
+    Returns:
+        The cleaned name.
     """
 
     n = name.lower()

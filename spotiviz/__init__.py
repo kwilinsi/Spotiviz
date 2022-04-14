@@ -12,8 +12,11 @@ def get_resources(path: str = None) -> str:
     If no path is given, an absolute reference to the root of the
     resources directory is returned.
 
-    :param path: a path to the desired file within the resources directory
-    :return: the full absolute path to that data file
+    Args:
+        path: A path to the desired file within the resources directory.
+
+    Returns:
+        The full absolute path to that data file.
     """
 
     if path is None:
@@ -30,8 +33,12 @@ def get_data(path: str = None) -> str:
     If no path is given, an absolute reference to the root of the data
     directory is returned.
 
-    :param path: a path to the desired file within the data directory
-    :return: the full absolute path to that data file
+    Args:
+        path: A path to the desired file within the data directory (or None
+        by default).
+
+    Returns:
+        The full absolute path to that data file.
     """
 
     if path is None:

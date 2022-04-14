@@ -37,8 +37,8 @@ def make_dir(path: str, name: str):
     created.
 
     Args:
-        path: the path to the directory to create
-        name: the name of the directory to use in the log message
+        path: The path to the directory to create.
+        name: The name of the directory to use in the log message.
     """
 
     if not os.path.exists(path):

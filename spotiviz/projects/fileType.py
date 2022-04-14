@@ -24,8 +24,10 @@ def getFileType(fileName: str) -> FileType:
     Get the type of the given file from a Spotify data download. The file is
     assigned a type based on its name, matched using regex.
 
-    :param fileName: the name of the file (not the full path)
-    :return: a filetype enum instance representing the type of the given file
+    Args:
+        fileName: The name of the file (not the full path).
+    Returns:
+        A filetype enum instance representing the type of the given file.
     """
 
     if re.match(STREAMING_REGEX, fileName):
