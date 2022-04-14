@@ -58,7 +58,7 @@ def main(project: str):
 
     # Correct date anomalies
     LOG.debug('  Correcting date anomalies...')
-    db.run_script(resc.get_sql_resource(sql.CLEAN_STREAMING_HISTORY_SCRIPT),
+    db.run_script(resc.get_sql_resource(sql.CORRECT_DATE_ANOMALIES_SCRIPT),
                   db.get_conn(ut.clean_project_name(project)))
 
 
