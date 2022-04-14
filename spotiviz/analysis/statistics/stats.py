@@ -19,6 +19,19 @@ class StatType(Enum):
     DATE = 2
 
 
+class StatUnit(Enum):
+    """
+    This is the unit that a statistic is given in, which is primarily used
+    when printing the unit to the console.
+    """
+
+    TRACKS = 'tracks'
+    ARTISTS = 'artists'
+    HOURS = 'hours'
+    DAYS = 'days'
+    NONE = ''
+
+
 class Statistic(Enum):
     """
     This enum class stores references to each of the statistics SQL files in
@@ -30,13 +43,15 @@ class Statistic(Enum):
     ARTIST_COUNT = (
         'artist_count',
         ut.get_file('artist_count.sql'),
-        StatType.INT
+        StatType.INT,
+        StatUnit.ARTISTS
     )
 
     TRACK_COUNT = (
         'track_count',
         ut.get_file('track_count.sql'),
-        StatType.INT
+        StatType.INT,
+        StatUnit.TRACKS
     )
 
     # LISTEN TIME
@@ -44,19 +59,22 @@ class Statistic(Enum):
     HOURS_TOTAL = (
         'hours_total',
         ut.get_file('hours_total.sql'),
-        StatType.INT
+        StatType.INT,
+        StatUnit.HOURS
     )
 
     AVG_LISTEN_TIME_OVERALL = (
         'avg_listen_time_overall',
         ut.get_file('avg_listen_time_overall.sql'),
-        StatType.FLOAT
+        StatType.FLOAT,
+        StatUnit.HOURS
     )
 
     AVG_LISTEN_TIME_FILTERED = (
         'avg_listen_time_filtered',
         ut.get_file('avg_listen_time_filtered.sql'),
-        StatType.FLOAT
+        StatType.FLOAT,
+        StatUnit.HOURS
     )
 
     # DATE RANGES
@@ -64,35 +82,42 @@ class Statistic(Enum):
     DATE_MIN = (
         'date_min',
         ut.get_file('date_min.sql'),
-        StatType.DATE
+        StatType.DATE,
+        StatUnit.NONE
     )
 
     DATE_MAX = (
         'date_max',
         ut.get_file('date_max.sql'),
-        StatType.DATE
+        StatType.DATE,
+        StatUnit.NONE
     )
 
     DATE_PRESENT = (
         'date_present',
         ut.get_file('date_present.sql'),
-        StatType.INT
+        StatType.INT,
+        StatUnit.DAYS
     )
 
     DATE_RANGE = (
         'date_range',
         ut.get_file('date_range.sql'),
-        StatType.INT
+        StatType.INT,
+        StatUnit.DAYS
     )
 
     DATE_LISTENED = (
         'date_listened',
         ut.get_file('date_listened.sql'),
-        StatType.INT
+        StatType.INT,
+        StatUnit.DAYS
     )
 
 
-def get_stats(connection: sqlite3.Connection) -> Iterable[Tuple[str, object]]:
+def get_stats(connection: sqlite3.Connection) -> Iterable[Tuple[str,
+                                                                object,
+                                                                StatUnit]]:
     """
     Yield an iterator over each of the statistics in the Statistic enumerated
     class.
@@ -106,16 +131,16 @@ def get_stats(connection: sqlite3.Connection) -> Iterable[Tuple[str, object]]:
     """
 
     for s in Statistic:
-        name, path, stat_type = s.value
+        name, path, stat_type, unit = s.value
         with open(path) as p:
             result = connection.execute(p.read()).fetchone()[0]
 
         if stat_type == StatType.INT:
-            yield name, int(result)
+            yield name, int(result), unit
         elif stat_type == StatType.FLOAT:
-            yield name, float(result)
+            yield name, float(result), unit
         elif stat_type == StatType.DATE:
-            yield name, proj_ut.to_date(result)
+            yield name, proj_ut.to_date(result), unit
 
 
 def get_stats_dict(project: str) -> Dict:
@@ -141,8 +166,8 @@ def get_stats_dict(project: str) -> Dict:
     s = dict()
 
     with db.get_conn(proj_ut.clean_project_name(project)) as conn:
-        for name, value in get_stats(conn):
-            s[name] = value
+        for name, value, unit in get_stats(conn):
+            s[name] = (value, unit)
 
     return s
 
@@ -165,10 +190,10 @@ def print_stats(project: str, stats_dict: Dict) -> None:
     print('Project:', project)
     print()
     for s in stats_dict:
-        value = stats_dict[s]
+        value, unit = stats_dict[s]
         if type(value) is datetime.datetime:
             v = proj_ut.date_to_str(value)
         else:
             v = str(value)
 
-        print('{stat}: {val}'.format(stat=s, val=v))
+        print('{stat}: {val} {u}'.format(stat=s, val=v, u=unit.value))
