@@ -7,7 +7,7 @@ from spotiviz.projects import \
     sql, preprocess, checks, utils as ut, spotifyDownload as sd
 from spotiviz.utils import db, resources as resc
 from spotiviz.utils.log import LOG
-from spotiviz.analysis.statistics import scripts
+from spotiviz.analysis.statistics import stats
 
 
 def delete_all_projects() -> None:
@@ -197,10 +197,10 @@ def get_stat_summary(project: str) -> Dict:
     checks.enforce_project_exists(project)
 
     # Create the statistics dictionary
-    stats = dict()
+    s = dict()
 
     with db.get_conn(ut.clean_project_name(project)) as conn:
-        for name, value in scripts.get_stats(conn):
-            stats[name] = value
+        for name, value in stats.get_stats(conn):
+            s[name] = value
 
-    return stats
+    return s
