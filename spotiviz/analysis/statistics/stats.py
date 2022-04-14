@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Tuple
+from typing import Iterable, Tuple
 import os.path
 import sqlite3
 
@@ -90,7 +90,7 @@ class Statistic(Enum):
     )
 
 
-def get_stats(connection: sqlite3.Connection) -> Tuple[str, object]:
+def get_stats(connection: sqlite3.Connection) -> Iterable[Tuple[str, object]]:
     """
     Yield an iterator over each of the statistics in the Statistic enumerated
     class.
