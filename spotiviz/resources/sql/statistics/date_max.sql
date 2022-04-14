@@ -3,5 +3,5 @@
  * was recorded.
  */
 
-SELECT MAX(day) as date_min
+SELECT MAX(day) AS date_min
 FROM ListenDates;

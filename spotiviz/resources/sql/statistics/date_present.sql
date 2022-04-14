@@ -1,7 +1,7 @@
 /*
- * Get the total number of days for which there is at least one listen present.
+ * Get the total number of non-missing days.
  */
 
-SELECT COUNT(day) days
+SELECT COUNT(day) AS days
 FROM ListenDates
-WHERE has_listen = TRUE;
+WHERE is_missing = FALSE;
