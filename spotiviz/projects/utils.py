@@ -30,7 +30,19 @@ def clean_project_name(name: str) -> str:
     return re.sub(r'[^\w-]', '', n[:-3] if n.endswith('.db') else n) + '.db'
 
 
-def date_range(start_date: date, end_date: date):
+def date_range(start_date: date, end_date: date) -> date:
+    """
+    Yields individual dates through an iterator in a range from the start to
+    ending dates, similar to the range() function.
+
+    Args:
+        start_date: The first date (inclusive).
+        end_date: The last date (exclusive).
+
+    Returns:
+        The next date in the sequence.
+
+    """
     for n in range(int((end_date - start_date).days)):
         yield start_date + timedelta(n)
 

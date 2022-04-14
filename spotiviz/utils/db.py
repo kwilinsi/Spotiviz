@@ -5,7 +5,7 @@ from spotiviz import get_data
 from spotiviz.utils.constants import sql
 
 
-def run_script(script: str, conn: sqlite3.Connection = None):
+def run_script(script: str, conn: sqlite3.Connection = None) -> None:
     """
     Run the specified script in the specified sqlite connection. If no
     connection is given, the default one to the program's main projects
@@ -18,6 +18,9 @@ def run_script(script: str, conn: sqlite3.Connection = None):
         script: A path to the .sql script file to execute.
         conn: [Optional] the connection to run, or the main program
         database if none is provided.
+
+    Returns:
+        None
     """
 
     if conn is None:

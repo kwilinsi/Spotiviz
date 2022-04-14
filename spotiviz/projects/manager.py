@@ -9,7 +9,7 @@ from spotiviz.utils import db, resources as resc
 from spotiviz.utils.log import LOG
 
 
-def delete_all_projects():
+def delete_all_projects() -> None:
     """
     Attempt to delete all the current projects. This performs two functions
     for each project:
@@ -17,6 +17,9 @@ def delete_all_projects():
     1. It removes each of their sqlite database files
     2. It removes their entries in the global, program-level sqlite database
     that lists all their programs.
+
+    Returns:
+        None
     """
 
     # Delete all the database files
@@ -37,13 +40,16 @@ def delete_all_projects():
         conn.execute(sql.CLEAR_ALL_PROJECTS)
 
 
-def create_project(name: str):
+def create_project(name: str) -> None:
     """
     Create a new project. Add it to the main program database file,
     and create a new database specifically for this project.
 
     Args:
-        name: the name of the project
+        name: The name of the project.
+
+    Returns:
+        None
     """
 
     # Check for preexistence of a project with this name
@@ -58,7 +64,7 @@ def create_project(name: str):
     LOG.info('Created a new project: {p}'.format(p=name))
 
 
-def create_project_entry(name: str):
+def create_project_entry(name: str) -> None:
     """
     Create the entry for a project in the main sqlite database for this
     Spotiviz installation.
@@ -73,13 +79,16 @@ def create_project_entry(name: str):
 
     Args:
         name: The name of the project.
+
+    Returns:
+        None
     """
 
     with db.get_conn() as conn:
         conn.execute(sql.ADD_PROJECT_ENTRY, (name,))
 
 
-def create_project_database(name: str):
+def create_project_database(name: str) -> None:
     """
     Create a sqlite database file for a project with the given name. Note
     that the name is cleaned by passing through clean_project_name() before
@@ -90,19 +99,25 @@ def create_project_database(name: str):
 
     Args:
         name: The name of the database.
+
+    Returns:
+        None
     """
 
     db.run_script(resc.get_sql_resource(sql.PROJECT_SETUP_SCRIPT),
                   db.get_conn(ut.clean_project_name(name)))
 
 
-def preprocess_data(project: str):
+def preprocess_data(project: str) -> None:
     """
     First, check to make sure that a project with the specified name
     actually exists. If it does call the main preprocessing function.
 
     Args:
         project: The name of the project.
+
+    Returns:
+        None
 
     Raises:
         ValueError: If the given project name is not recognized.
@@ -115,7 +130,7 @@ def preprocess_data(project: str):
 
 
 def add_download(project: str, path: str,
-                 name: str = None, download_date: date = None):
+                 name: str = None, download_date: date = None) -> None:
     """
     Create a SpotifyDownload, process it, and save it to the specified
     project all at once.
@@ -126,13 +141,17 @@ def add_download(project: str, path: str,
         name: The name to give the download (or omit to default to the name
               of the bottom-level directory in the path).
         download_date: The date that the download was requested from Spotify.
+
+    Returns:
+        None
     """
 
     d = sd.SpotifyDownload(project, path, name, download_date)
     d.save()
 
 
-def build_project(project: str, root_dir: str, paths: List[Tuple[str, str]]):
+def build_project(project: str, root_dir: str,
+                  paths: List[Tuple[str, str]]) -> None:
     """
     Create a new project with the specified name. Then bulk add downloads to
     it, saving both the download information and the streaming histories.
@@ -144,6 +163,9 @@ def build_project(project: str, root_dir: str, paths: List[Tuple[str, str]]):
         paths: A list of tuples for each downloads to add to the project.
                Each tuple should be the path to a download within the root_dir
                and the date the download was requested from Spotify.
+
+    Returns:
+        None
     """
 
     create_project(project)

@@ -3,6 +3,13 @@ import logging
 
 
 def initializeLogger() -> logging.Logger:
+    """
+    Initialize the single logger instance that is used collectively by the
+    rest of the Python files in the spotiviz package.
+
+    Returns:
+        The logger instance.
+    """
     handler = colorlog.StreamHandler()
 
     formatter = colorlog.ColoredFormatter(

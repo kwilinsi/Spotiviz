@@ -77,11 +77,14 @@ class SpotifyDownload:
         ))
         LOG.debug('  Indexed {c} files'.format(c=len(self.files)))
 
-    def __index(self):
+    def __index(self) -> None:
         """
         Go through all the files in the path associated with this Spotify
         Download. Add each file to an array of tuples, paired with its file
         type.
+
+        Returns:
+            None
         """
 
         self.files = [(file, ft.getFileType(file))
@@ -135,7 +138,7 @@ class SpotifyDownload:
 
         return os.path.join(self.path, file)
 
-    def __set_download_date(self):
+    def __set_download_date(self) -> None:
         """
         Set the download_date associated with this download in the Downloads
         table. That date should represent the date that the download was
@@ -153,6 +156,9 @@ class SpotifyDownload:
         download_date, this doesn't mean anything is wrong. The user may
         simply have not listened to Spotify a few days before requesting
         their data.
+
+        Returns:
+            None
         """
 
         with db.get_conn(ut.clean_project_name(self.project)) as conn:
@@ -177,7 +183,7 @@ class SpotifyDownload:
             conn.execute(sql.UPDATE_DOWNLOAD_DATE,
                          (ut.date_to_str(self.date), self.download_id))
 
-    def save(self):
+    def save(self) -> None:
         """
         Add information pertaining to this download to the database for the
         parent project. This includes:
@@ -190,6 +196,9 @@ class SpotifyDownload:
         specific time) to the StreamingHistoryRaw table.
 
         In all cases, duplicate additions to the database are ignored.
+
+        Returns:
+            None
         """
 
         # Open a connection to the database for the parent project

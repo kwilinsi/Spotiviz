@@ -7,7 +7,7 @@ from spotiviz.utils.log import LOG
 from spotiviz.projects import sql, utils as ut
 
 
-def main(project: str):
+def main(project: str) -> None:
     """
     After the data from a Spotify download has been stored in the project,
     it needs to undergo some initial preprocessing. This allows the data to
@@ -36,6 +36,9 @@ def main(project: str):
 
     Args:
         project: The name of the project (MUST be valid--not checked).
+
+    Returns:
+        None
     """
 
     LOG.debug('Started preprocessing for project {p}'.format(p=project))
@@ -59,13 +62,16 @@ def main(project: str):
                   db.get_conn(ut.clean_project_name(project)))
 
 
-def list_dates(project: str):
+def list_dates(project: str) -> None:
     """
     This populates the ListenDates table with a list of every day between the
     first and last date found in the StreamingHistoryRaw table.
 
     Args:
         project: The name of the project. (Must be valid; not checked).
+
+    Returns:
+        None
     """
 
     with db.get_conn(ut.clean_project_name(project)) as conn:
@@ -84,13 +90,16 @@ def list_dates(project: str):
                                         d in dates_incl))
 
 
-def identify_missing_dates(project: str):
+def identify_missing_dates(project: str) -> None:
     """
     This updates the Dates table to indicate whether each date is marked
     missing, meaning it is not captured by any of the Downloads.
 
     Args:
         project: The name of the project. (Must be valid; not checked).
+
+    Returns:
+        None
     """
 
     with db.get_conn(ut.clean_project_name(project)) as conn:

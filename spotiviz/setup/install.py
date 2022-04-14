@@ -30,7 +30,7 @@ def install_spotiviz():
     manager.delete_all_projects()
 
 
-def make_dir(path: str, name: str):
+def make_dir(path: str, name: str) -> None:
     """
     Test whether the given directory exists by its path. If it doesn't exist,
     create it, and log a message to the console indicating that is being
@@ -39,6 +39,9 @@ def make_dir(path: str, name: str):
     Args:
         path: The path to the directory to create.
         name: The name of the directory to use in the log message.
+
+    Returns:
+        None
     """
 
     if not os.path.exists(path):

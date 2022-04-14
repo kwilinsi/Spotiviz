@@ -6,13 +6,16 @@ from spotiviz.utils.log import LOG
 from spotiviz.projects import manager, sql, utils as ut
 
 
-def enforce_project_exists(project: str):
+def enforce_project_exists(project: str) -> None:
     """
     Ensure that the given project exists. If it does not exist, a ValueError
     is raised. If it does exist, nothing happens.
 
     Args:
         project: The name of the project to check.
+
+    Returns:
+        None
 
     Raises:
         ValueError: If the project does not exist.

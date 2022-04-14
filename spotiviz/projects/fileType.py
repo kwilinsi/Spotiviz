@@ -26,6 +26,7 @@ def getFileType(fileName: str) -> FileType:
 
     Args:
         fileName: The name of the file (not the full path).
+
     Returns:
         A filetype enum instance representing the type of the given file.
     """
