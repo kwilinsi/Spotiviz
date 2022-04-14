@@ -5,7 +5,7 @@ from datetime import date
 
 from spotiviz.utils import db
 from spotiviz.utils.log import LOG
-from spotiviz.projects import manager, checks, sql, utils as ut, fileType as ft
+from spotiviz.projects import checks, sql, utils as ut, fileType as ft
 
 
 class SpotifyDownload:

@@ -1,11 +1,10 @@
 import os.path
 
-from spotiviz.utils import resources as re
-from spotiviz.utils import db
+from spotiviz import get_data
+from spotiviz.projects import manager
+from spotiviz.utils import db, resources as re
 from spotiviz.utils.constants import sql
 from spotiviz.utils.log import LOG
-from spotiviz.projects import manager
-from spotiviz import get_data
 
 
 def install_spotiviz():
@@ -22,7 +21,6 @@ def install_spotiviz():
     make_dir(get_data(os.path.join('sqlite', 'projects')), 'Projects')
 
     # Delete the program database, if it exists
-
 
     # Run installation script
     LOG.debug('Running installation script')
