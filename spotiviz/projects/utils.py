@@ -3,6 +3,7 @@ import re
 from datetime import date, timedelta, datetime
 from typing import Optional
 
+# This format is used for storing dates in the SQLite database
 __DATE_FORMAT = '%Y-%m-%d'
 
 
