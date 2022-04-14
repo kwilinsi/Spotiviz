@@ -1,3 +1,4 @@
+import datetime
 from enum import Enum
 from typing import Iterable, Tuple, Dict
 import os.path
@@ -144,3 +145,30 @@ def get_stats_dict(project: str) -> Dict:
             s[name] = value
 
     return s
+
+
+def print_stats(project: str, stats_dict: Dict) -> None:
+    """
+    Print the summary statistics from a project to the console. This is mostly
+    used for testing and debugging purposes.
+
+    Args:
+        project: The name of the project (only used for displaying in the
+                 console).
+        stats_dict: A dictionary of summary statistics, such as that generated
+                    by get_stats_dict().
+
+    Returns:
+        None
+    """
+
+    print('Project:', project)
+    print()
+    for s in stats_dict:
+        value = stats_dict[s]
+        if type(value) is datetime.datetime:
+            v = proj_ut.date_to_str(value)
+        else:
+            v = str(value)
+
+        print('{stat}: {val}'.format(stat=s, val=v))
