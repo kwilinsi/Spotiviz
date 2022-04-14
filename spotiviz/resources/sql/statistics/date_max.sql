@@ -3,5 +3,5 @@
  * was recorded.
  */
 
-SELECT DATE(MAX(end_time)) as date_max
-FROM StreamingHistory;
+SELECT MAX(day) as date_min
+FROM ListenDates;

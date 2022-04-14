@@ -3,5 +3,5 @@
  * was recorded.
  */
 
-SELECT DATE(MIN(end_time)) as date_min
-FROM StreamingHistory;
+SELECT MIN(day) as date_min
+FROM ListenDates;
