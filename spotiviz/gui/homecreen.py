@@ -17,14 +17,14 @@ class HomeScreen(QMainWindow):
         main_buttons_layout = QHBoxLayout()
         project_list_layout = QVBoxLayout()
 
-        # Define buttons
+        # Define main project buttons
         btn_open = QPushButton("Open Project")
         main_buttons_layout.addWidget(btn_open)
 
         btn_new = QPushButton("New Project")
         main_buttons_layout.addWidget(btn_new)
 
-        # Create project list
+        # Create list of recent projects
         project_list_lbl = QLabel("Recent Projects")
         project_list_lbl.setAlignment(
             Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
