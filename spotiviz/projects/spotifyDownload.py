@@ -161,7 +161,7 @@ class SpotifyDownload:
             None
         """
 
-        with db.get_conn(ut.clean_project_name(self.project)) as conn:
+        with db.get_conn(ut.get_database_path(self.project)) as conn:
             # Get the last end_time
             query = conn.execute(sql.GET_LAST_END_TIME, (self.download_id,))
             end_date = ut.to_date(query.fetchone()[0])
@@ -202,7 +202,7 @@ class SpotifyDownload:
         """
 
         # Open a connection to the database for the parent project
-        with db.get_conn(ut.clean_project_name(self.project)) as conn:
+        with db.get_conn(ut.get_database_path(self.project)) as conn:
             # Add the path for this Download to the database
             conn.execute(sql.ADD_DOWNLOAD, (self.path, self.name,
                                             ut.date_to_str(self.date)))

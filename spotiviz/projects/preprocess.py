@@ -46,7 +46,7 @@ def main(project: str) -> None:
     # Clean the streaming history
     LOG.debug('  Cleaning streaming history...')
     db.run_script(resc.get_sql_resource(sql.CLEAN_STREAMING_HISTORY_SCRIPT),
-                  db.get_conn(ut.clean_project_name(project)))
+                  db.get_conn(ut.get_database_path(project)))
 
     # Set the list of dates
     LOG.debug('  Listing dates...')
@@ -59,7 +59,7 @@ def main(project: str) -> None:
     # Correct date anomalies
     LOG.debug('  Correcting date anomalies...')
     db.run_script(resc.get_sql_resource(sql.CORRECT_DATE_ANOMALIES_SCRIPT),
-                  db.get_conn(ut.clean_project_name(project)))
+                  db.get_conn(ut.get_database_path(project)))
 
 
 def list_dates(project: str) -> None:
@@ -74,7 +74,7 @@ def list_dates(project: str) -> None:
         None
     """
 
-    with db.get_conn(ut.clean_project_name(project)) as conn:
+    with db.get_conn(ut.get_database_path(project)) as conn:
         # Get a list of all the dates for which there is listening history
         query = conn.execute(sql.GET_ALL_INCLUDED_DATES)
         dates_incl = [ut.to_date(f[0]) for f in query]
@@ -102,7 +102,7 @@ def identify_missing_dates(project: str) -> None:
         None
     """
 
-    with db.get_conn(ut.clean_project_name(project)) as conn:
+    with db.get_conn(ut.get_database_path(project)) as conn:
         # Get a list of download dates for all the downloads
         query = conn.execute(sql.GET_DOWNLOAD_DATES)
         download_dates = [ut.to_date(f[0]) for f in query]
