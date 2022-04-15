@@ -188,8 +188,8 @@ def print_stats(project: str, stats_dict: Dict) -> None:
         None
     """
 
-    print('Project:', project)
     print('Summary Statistics')
+    print('Project:', project)
     print()
 
     for s in stats_dict:
