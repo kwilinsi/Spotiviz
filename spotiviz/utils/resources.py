@@ -45,5 +45,5 @@ def read(path: str) -> str:
         The contents of the file as a string.
     """
 
-    with open(path) as p:
+    with open(path, 'r') as p:
         return p.read()
