@@ -15,7 +15,7 @@ from spotiviz.projects import sql
 __DATE_FORMAT = '%Y-%m-%d'
 
 # This format is used for storing complete timestamps
-__DATETIME_FORMAT = '%Y-%m-%d %H-%M-%s'
+__DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 
 def clean_project_name(name: str) -> str:
