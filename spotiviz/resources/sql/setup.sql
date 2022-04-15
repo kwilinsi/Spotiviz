@@ -8,6 +8,6 @@ DROP TABLE IF EXISTS Projects;
 CREATE TABLE Projects
 (
     name          TEXT PRIMARY KEY,
-    database_path TEXT,
+    database_path TEXT      NOT NULL,
     created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
