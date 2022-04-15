@@ -3,6 +3,6 @@
  * through Qt.
  */
 
-*[invalid_path="true"] {
+*[invalidPath="true"] {
     color: #a31f18;
 }

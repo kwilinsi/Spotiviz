@@ -36,7 +36,7 @@ class ProjectButton(QPushButton):
         else:
             path_lbl = QLabel(path) if path is None else QLabel(
                 'Missing Database File')
-            path_lbl.setProperty('invalid_path', True)
+            path_lbl.setProperty('invalidPath', True)
             self.setDisabled(True)
 
         # Set alignment

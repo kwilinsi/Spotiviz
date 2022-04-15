@@ -1,1 +1,1 @@
-CSS_GLOBAL_STYLES = 'global_styles.css'
+QSS_GLOBAL_STYLES = 'global_styles.qss'

@@ -19,7 +19,7 @@ def start() -> None:
     global APP, HOME
 
     APP = QApplication([])
-    APP.setStyleSheet(resc.read(resc.get_gui_resource(const.CSS_GLOBAL_STYLES)))
+    APP.setStyleSheet(resc.read(resc.get_gui_resource(const.QSS_GLOBAL_STYLES)))
 
     HOME = homecreen.HomeScreen()
     HOME.show()
