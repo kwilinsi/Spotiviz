@@ -1,0 +1,8 @@
+/*
+ * This script is used to control the appearance of the GUI windows created
+ * through Qt.
+ */
+
+*[invalid_path="true"] {
+    color: #a31f18;
+}

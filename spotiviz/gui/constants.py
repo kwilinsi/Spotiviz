@@ -1,0 +1,1 @@
+CSS_GLOBAL_STYLES = 'global_styles.css'

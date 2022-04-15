@@ -1,12 +1,9 @@
-import os
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFrame,
-    QSizePolicy
+    QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFrame
 )
 
-from spotiviz import get_data
-from spotiviz.projects import checks, utils
+from spotiviz.gui.widgets import db_widgets
 
 
 class HomeScreen(QMainWindow):
@@ -31,13 +28,10 @@ class HomeScreen(QMainWindow):
         project_list_lbl = QLabel("Recent Projects")
         project_list_lbl.setAlignment(
             Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
-        btn_proj1 = QPushButton("Project 1")
-        btn_proj2 = QPushButton("Project 2")
-        btn_proj3 = QPushButton("Project 3")
+
         project_list_layout.addWidget(project_list_lbl)
-        project_list_layout.addWidget(btn_proj1)
-        project_list_layout.addWidget(btn_proj2)
-        project_list_layout.addWidget(btn_proj3)
+        for b in db_widgets.get_all_project_buttons():
+            project_list_layout.addWidget(b)
 
         # Set padding
         page_layout.setContentsMargins(200, 50, 200, 50)
@@ -52,40 +46,3 @@ class HomeScreen(QMainWindow):
         self.setCentralWidget(frame)
 
         self.resize(1000, 621)
-
-    def make_project_button(self, project: str) -> QPushButton:
-        """
-        Create a button that represents a "recent project". It contains the
-        project name and the path to that project's database file.
-
-        If the given project name is invalid, the button will be disabled and
-        the path will be replaced with a message indicating that it isn't valid.
-
-        Args:
-            project: The name of the project.
-
-        Returns:
-            A button for that project.
-        """
-
-        # Check to see if the project is valid
-        does_exist = checks.does_project_exist(project)
-
-        button = QPushButton()
-        layout = QHBoxLayout()
-
-        name_lbl = QLabel(project)
-        if does_exist:
-            path_lbl = QLabel(get_data(os.path.join(
-                'sqlite', 'projects', utils.clean_project_name(project))))
-        else:
-            path_lbl = QLabel('Missing Database File')
-
-        layout.addWidget(name_lbl)
-        layout.addWidget(path_lbl)
-
-        button.setLayout(layout)
-        button.setSizePolicy(QSizePolicy.Policy.Preferred,
-                             QSizePolicy.Policy.Expanding)
-
-        return button
