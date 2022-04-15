@@ -1,7 +1,6 @@
 import datetime
 from enum import Enum
 from typing import Iterable, Tuple, Dict
-import os.path
 import sqlite3
 
 from spotiviz.analysis.statistics import utils as ut
@@ -166,7 +165,7 @@ def get_stats_dict(project: str) -> Dict:
     # Create the statistics dictionary
     s = dict()
 
-    with db.get_conn(proj_ut.clean_project_name(project)) as conn:
+    with db.get_conn(proj_ut.get_database_path(project)) as conn:
         for stat_type, value, unit in get_stats(conn):
             s[stat_type] = (value, unit)
 

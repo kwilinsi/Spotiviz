@@ -1,15 +1,28 @@
 import os.path
+from enum import Enum
 
-from spotiviz import get_data
 from spotiviz.utils import db
-from spotiviz.utils.log import LOG
-from spotiviz.projects import manager, sql, utils as ut
+from spotiviz.projects import sql, utils as ut
+
+
+class ProjectState(Enum):
+    # A project is undefined if it isn't listed in the Projects table
+    UNDEFINED = 0
+
+    # A project exists if it's in the Projects table and has a database file
+    EXISTS = 1
+
+    # A project is given this state if it is listed in the Projects table, but
+    # its database file can't be found for some reason.
+    MISSING_DATABASE = 2
 
 
 def enforce_project_exists(project: str) -> None:
     """
-    Ensure that the given project exists. If it does not exist, a ValueError
-    is raised. If it does exist, nothing happens.
+    Ensure that the given project exists by checking its ProjectState
+    according to checks.project_state(). If it does not fully exist (meaning
+    its undefined or missing a database) then a ValueError is raised. If it
+    does exist, nothing happens.
 
     Args:
         project: The name of the project to check.
@@ -18,14 +31,18 @@ def enforce_project_exists(project: str) -> None:
         None
 
     Raises:
-        ValueError: If the project does not exist.
+        ValueError: If the project does not fully exist.
 
     """
-    if not does_project_exist(project):
-        raise ValueError('Unrecognized project name {p}'.format(p=project))
+
+    state = project_state(project)
+    if state == ProjectState.UNDEFINED:
+        raise ValueError("Unrecognized project name '{p}'".format(p=project))
+    elif state == ProjectState.MISSING_DATABASE:
+        raise ValueError("Project '{p}' missing database".format(p=project))
 
 
-def does_project_exist(name: str) -> bool:
+def project_state(name: str) -> ProjectState:
     """
     Check whether a project with the given name already exists.
 
@@ -49,28 +66,22 @@ def does_project_exist(name: str) -> bool:
     #  database but no sql entry and it'll try to make a second sql entry for
     #  the same database which is already in use by 'abC d'.
 
-    # Check whether a database with this project name (cleaned) exists
-    db_exists = os.path.isfile(
-        get_data(os.path.join('sqlite', 'projects',
-                              ut.clean_project_name(name)))
-    )
-
     # Check whether there's a project entry with this name (not cleaned) in the
     # Projects table
     with db.get_conn() as conn:
         entry_exists = bool(
             conn.execute(sql.CHECK_PROJECT_EXISTS, (name,)).fetchone())
 
-    # If the entry exists but not the database, make the database
-    if entry_exists and not db_exists:
-        LOG.debug('Project {p} missing database; making it...'.format(p=name))
-        manager.create_project_database(name)
+    # If there is no entry, the project doesn't exist. Return UNDEFINED.
+    if not entry_exists:
+        return ProjectState.UNDEFINED
 
-    # If the database exists but not the entry, add the entry
-    if db_exists and not entry_exists:
-        LOG.debug('Project {p} missing sql entry; adding it...'.format(p=name))
-        manager.create_project_entry(name)
+    # If there is an entry, get the database path
+    path = ut.get_database_path(name)
 
-    # If either the database or entry previously existed (in which case they
-    # both exist now), return true. If neither exist, return false
-    return db_exists or entry_exists
+    # If the path exists, the project fully exists. Otherwise, mark its state
+    # as missing the database file
+    if os.path.isfile(path):
+        return ProjectState.EXISTS
+    else:
+        return ProjectState.MISSING_DATABASE

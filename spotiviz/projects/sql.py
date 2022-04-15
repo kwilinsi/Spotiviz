@@ -12,7 +12,14 @@ CORRECT_DATE_ANOMALIES_SCRIPT = os.path.join(PREPROCESSING_DIR,
 
 CHECK_PROJECT_EXISTS = 'SELECT name FROM Projects WHERE name = ?;'
 
-ADD_PROJECT_ENTRY = 'INSERT OR IGNORE INTO Projects (name) VALUES (?);'
+ADD_PROJECT_ENTRY = 'INSERT OR IGNORE INTO Projects ' \
+                    '(name, database_path) VALUES (?, ?);'
+
+GET_ALL_PROJECTS = 'SELECT * FROM Projects;'
+
+GET_PROJECT_PATH = 'SELECT database_path FROM Projects WHERE name = ?;'
+
+UPDATE_PROJECT_PATH = 'UPDATE Projects SET database_path=? WHERE name = ?;'
 
 CLEAR_ALL_PROJECTS = 'DELETE FROM Projects WHERE TRUE;'
 

@@ -31,29 +31,29 @@ def run_script(script: str, conn: sqlite3.Connection = None) -> None:
     conn.close()
 
 
-def get_conn(file: str = None) -> sqlite3.Connection:
+def get_conn(path: str = None) -> sqlite3.Connection:
     """
-    Initialize a connection to the specified sqlite database file. If no file
-    is specified, a connection to the default projects.db file is returned
-    that governs the entire spotiviz installation.
+    Initialize a connection to the specified SQLite database file. If no path
+    is given (or it is None), a connection to the default projects.db file is
+    returned that governs the entire Spotiviz installation.
 
-    If any file is specified, it is assumed to be a project file,
-    and a connection to that file in the data/sqlite/projects directory is
-    returned. If that file doesn't already exist, it is created.
+    Otherwise, a connection to the database at the specified path is returned.
+
+    Note that if a file at the specified path already exists, it will be
+    overwritten.
 
     Args:
-        file: The name of the database file, ending in .db.
+        path: [Optional] The full path to a SQLite database file to connect to.
 
     Returns:
         A connection to the specified database.
     """
 
-    if file is None:
+    if path is None:
         return sqlite3.connect(
             get_data(os.path.join('sqlite', sql.DATABASE_PROGRAM_NAME)))
     else:
-        return sqlite3.connect(
-            get_data(os.path.join('sqlite', 'projects', file)))
+        return sqlite3.connect(path)
 
 
 def get_last_id(conn: sqlite3.Connection) -> int:

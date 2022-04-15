@@ -3,8 +3,19 @@ import re
 from datetime import date, timedelta, datetime
 from typing import Optional, Iterable
 
+from spotiviz.utils import db
+from spotiviz.projects import sql
+
+# NOTE: This file intentionally does not have any dependencies within the
+# spotiviz.projects package (except the sql file). Therefore, it can be
+# freely imported by those files without risk of circular dependencies.
+
+
 # This format is used for storing dates in the SQLite database
 __DATE_FORMAT = '%Y-%m-%d'
+
+# This format is used for storing complete timestamps
+__DATETIME_FORMAT = '%Y-%m-%d %H-%M-%s'
 
 
 def clean_project_name(name: str) -> str:
@@ -28,6 +39,29 @@ def clean_project_name(name: str) -> str:
 
     n = name.lower()
     return re.sub(r'[^\w-]', '', n[:-3] if n.endswith('.db') else n) + '.db'
+
+
+def get_database_path(project: str) -> str:
+    """
+    Given the name of a project, return the path to its SQLite database file.
+    This is found by querying the Projects table in the main program.db
+    database.
+
+    Args:
+        project: The name of the project.
+
+    Returns:
+        The path to the project's SQLite database file.
+
+    Raises:
+        ValueError: If the given project does not exist.
+    """
+
+    with db.get_conn() as conn:
+        try:
+            return conn.execute(sql.GET_PROJECT_PATH, (project,)).fetchone()[0]
+        except Exception:
+            raise ValueError("There is no project '{p}'".format(p=project))
 
 
 def date_range(start_date: date, end_date: date) -> Iterable[date]:
@@ -71,6 +105,33 @@ def to_date(date_str: str) -> Optional[datetime]:
     except Exception:
         raise ValueError("Invalid date_str '" + date_str +
                          "' cannot be parsed to a date object.")
+
+
+def to_datetime(time_str: str) -> Optional[datetime]:
+    """
+    Analogous to utils.to_date() but operating on full timestamps rather than
+    simply dates, this function accepts a timestamp as a string and returns
+    it as a proper datetime object.
+
+    Args:
+        time_str: The string to convert to a datetime object.
+
+    Returns:
+        The datetime object, or None if the given string is None.
+
+    Raises:
+        ValueError: If the provided time string fails while parsing to a
+                    datetime object.
+    """
+
+    if time_str is None:
+        return None
+
+    try:
+        return datetime.strptime(time_str, __DATETIME_FORMAT)
+    except Exception:
+        raise ValueError("Invalid time_str '" + time_str +
+                         "' cannot be parsed to a datetime object.")
 
 
 def date_to_str(date_obj: date) -> str:
