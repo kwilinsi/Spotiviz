@@ -8,9 +8,9 @@
  * This is rounded to four decimal places.
  */
 
-SELECT ROUND(hours, 4)        AS hours,
-       days,
-       ROUND(hours / days, 4) AS avg_hours_per_day
+SELECT ROUND(hours / days, 4) AS avg_hours_per_day,
+       ROUND(hours, 4)        AS hours,
+       days
 
 FROM (SELECT CAST(SUM(ms_played) AS REAL) / 1000 / 60 / 60 AS hours
       FROM StreamingHistory),
