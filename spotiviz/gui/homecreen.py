@@ -1,7 +1,7 @@
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, \
-    QPushButton, \
-    QWidget, QLabel
+from PyQt6.QtWidgets import (
+    QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFrame
+)
 
 
 class HomeScreen(QMainWindow):
@@ -35,12 +35,15 @@ class HomeScreen(QMainWindow):
         project_list_layout.addWidget(btn_proj3)
 
         # Set padding
+        page_layout.setContentsMargins(200, 50, 200, 50)
         page_layout.setSpacing(20)
 
         # Combine layouts
         page_layout.addLayout(main_buttons_layout)
         page_layout.addLayout(project_list_layout)
 
-        widget = QWidget()
-        widget.setLayout(page_layout)
-        self.setCentralWidget(widget)
+        frame = QFrame()
+        frame.setLayout(page_layout)
+        self.setCentralWidget(frame)
+
+        self.resize(1000, 621)
