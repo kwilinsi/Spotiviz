@@ -50,7 +50,6 @@ class ProjectButton(QPushButton):
         layout.addWidget(path_lbl)
 
         self.setLayout(layout)
-        self.setSizePolicy(QSizePolicy.Policy.Preferred,
+        self.setMaximumSize(500, 75)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding,
                            QSizePolicy.Policy.Expanding)
-
-        self.setStyleSheet("QPushButton { color: yellow }")

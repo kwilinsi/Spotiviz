@@ -33,9 +33,10 @@ class HomeScreen(QMainWindow):
         for b in db_widgets.get_all_project_buttons():
             project_list_layout.addWidget(b)
 
-        # Set padding
+        # Set padding and alignment
         page_layout.setContentsMargins(200, 50, 200, 50)
         page_layout.setSpacing(20)
+        project_list_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         # Combine layouts
         page_layout.addLayout(main_buttons_layout)
