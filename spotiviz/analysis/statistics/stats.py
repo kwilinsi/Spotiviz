@@ -1,7 +1,6 @@
 import datetime
 from enum import Enum
 from typing import Iterable, Tuple, Dict
-import os.path
 import sqlite3
 
 from spotiviz.analysis.statistics import utils as ut

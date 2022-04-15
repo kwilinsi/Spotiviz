@@ -4,8 +4,8 @@ import os.path
 from typing import List, Tuple, Dict
 
 from spotiviz import get_data
-from spotiviz.projects import \
-    sql, preprocess, checks, utils as ut, spotifyDownload as sd
+from spotiviz.projects import (
+    sql, preprocess, checks, utils as ut, spotifyDownload as sd)
 from spotiviz.utils import db, resources as resc
 from spotiviz.utils.log import LOG
 
