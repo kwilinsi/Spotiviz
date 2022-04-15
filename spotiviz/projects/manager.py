@@ -234,7 +234,8 @@ def add_download(project: str, path: str,
 
 
 def build_project(project: str, root_dir: str,
-                  paths: List[Tuple[str, str]]) -> None:
+                  paths: List[Tuple[str, str]],
+                  database_path: str = None) -> None:
     """
     Create a new project with the specified name. Then bulk add downloads to
     it, saving both the download information and the streaming histories.
@@ -246,12 +247,14 @@ def build_project(project: str, root_dir: str,
         paths: A list of tuples for each downloads to add to the project.
                Each tuple should be the path to a download within the root_dir
                and the date the download was requested from Spotify.
+        database_path: [Optional] A path to the SQLite database file for
+                       storing the project data.
 
     Returns:
         None
     """
 
-    create_project(project)
+    create_project(project, database_path)
     for path, d in paths:
         add_download(project, os.path.join(root_dir, path),
                      download_date=ut.to_date(d))
