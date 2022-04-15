@@ -14,6 +14,9 @@ from spotiviz.projects import sql
 # This format is used for storing dates in the SQLite database
 __DATE_FORMAT = '%Y-%m-%d'
 
+# This format is used for storing complete timestamps
+__DATETIME_FORMAT = '%Y-%m-%d %H-%M-%s'
+
 
 def clean_project_name(name: str) -> str:
     """
@@ -102,6 +105,33 @@ def to_date(date_str: str) -> Optional[datetime]:
     except Exception:
         raise ValueError("Invalid date_str '" + date_str +
                          "' cannot be parsed to a date object.")
+
+
+def to_datetime(time_str: str) -> Optional[datetime]:
+    """
+    Analogous to utils.to_date() but operating on full timestamps rather than
+    simply dates, this function accepts a timestamp as a string and returns
+    it as a proper datetime object.
+
+    Args:
+        time_str: The string to convert to a datetime object.
+
+    Returns:
+        The datetime object, or None if the given string is None.
+
+    Raises:
+        ValueError: If the provided time string fails while parsing to a
+                    datetime object.
+    """
+
+    if time_str is None:
+        return None
+
+    try:
+        return datetime.strptime(time_str, __DATETIME_FORMAT)
+    except Exception:
+        raise ValueError("Invalid time_str '" + time_str +
+                         "' cannot be parsed to a datetime object.")
 
 
 def date_to_str(date_obj: date) -> str:

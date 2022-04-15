@@ -15,6 +15,8 @@ CHECK_PROJECT_EXISTS = 'SELECT name FROM Projects WHERE name = ?;'
 ADD_PROJECT_ENTRY = 'INSERT OR IGNORE INTO Projects ' \
                     '(name, database_path) VALUES (?, ?);'
 
+GET_ALL_PROJECTS = 'SELECT * FROM Projects;'
+
 GET_PROJECT_PATH = 'SELECT database_path FROM Projects WHERE name = ?;'
 
 UPDATE_PROJECT_PATH = 'UPDATE Projects SET database_path=? WHERE name = ?;'

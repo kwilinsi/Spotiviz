@@ -1,6 +1,7 @@
+import datetime
 from datetime import date
 import os.path
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from spotiviz import get_data
 from spotiviz.projects import \
@@ -256,3 +257,19 @@ def build_project(project: str, root_dir: str,
                      download_date=ut.to_date(d))
 
     preprocess_data(project)
+
+
+def get_all_projects() -> Dict[str, Tuple[str, datetime.datetime]]:
+    """
+    Get a list of all the projects registered in the Projects table.
+
+    This is given as a Python dictionary. Each project name is a key, and the
+    values are tuples of the database path and the creation timestamp.
+
+    Returns:
+        A dictionary with each project name listed as a key.
+    """
+
+    with db.get_conn() as conn:
+        result = conn.execute(sql.GET_ALL_PROJECTS)
+        return {p[0]: (p[1], ut.to_datetime(p[2])) for p in result}
