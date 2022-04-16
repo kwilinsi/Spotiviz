@@ -12,8 +12,8 @@
 }
 
 *[noProjects="true"] {
-    color: #45201e;
-    font-size: 14px;
+    color: #8C99a3;
+    font-size: 16px;
     font-style: italic;
 }
 

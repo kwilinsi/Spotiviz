@@ -21,11 +21,11 @@ class HomeScreen(QMainWindow):
         project_list_layout = QVBoxLayout()
 
         # Define main project buttons
-        btn_open = MainButton("Open Project")
-        main_buttons_layout.addWidget(btn_open)
-
         btn_new = MainButton("New Project")
         main_buttons_layout.addWidget(btn_new)
+
+        btn_open = MainButton("Open Project")
+        main_buttons_layout.addWidget(btn_open)
 
         # Create list of recent projects
         project_list_lbl = Header("Recent Projects")
@@ -36,7 +36,8 @@ class HomeScreen(QMainWindow):
             project_list_layout.addWidget(b)
 
         if len(proj_buttons) == 0:
-            no_projects = QLabel("No recent projects. Create one to begin.")
+            no_projects = QLabel("No recent projects found. "
+                                 "Create or import one first.")
             no_projects.setProperty('noProjects', True)
             project_list_layout.addWidget(no_projects)
 
