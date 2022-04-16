@@ -7,9 +7,26 @@
     color: #a31f18;
 }
 
+QLabel {
+    font-family: "Lato";
+    font-size: 14px;
+}
+
 Header {
     font-size: 24px;
     font-family: "Lato";
     font-weight: bold;
     color: #333333;
+}
+
+MainButton {
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffffff;
+    background-color: #2e67c9;
+    border: 0px;
+}
+
+MainButton:hover:!pressed {
+    background-color: #518cf0;
 }

@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import (
 )
 
 from spotiviz.gui.widgets.header import Header
+from spotiviz.gui.widgets.main_button import MainButton
 from spotiviz.gui.widgets import db_widgets
 
 
@@ -19,10 +20,10 @@ class HomeScreen(QMainWindow):
         project_list_layout = QVBoxLayout()
 
         # Define main project buttons
-        btn_open = QPushButton("Open Project")
+        btn_open = MainButton("Open Project")
         main_buttons_layout.addWidget(btn_open)
 
-        btn_new = QPushButton("New Project")
+        btn_new = MainButton("New Project")
         main_buttons_layout.addWidget(btn_new)
 
         # Create list of recent projects
@@ -33,7 +34,7 @@ class HomeScreen(QMainWindow):
             project_list_layout.addWidget(b)
 
         # Set padding and alignment
-        page_layout.setContentsMargins(200, 50, 200, 50)
+        page_layout.setContentsMargins(150, 50, 150, 50)
         page_layout.setSpacing(20)
         project_list_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
@@ -45,4 +46,4 @@ class HomeScreen(QMainWindow):
         frame.setLayout(page_layout)
         self.setCentralWidget(frame)
 
-        self.resize(1000, 621)
+        self.resize(800, 500)

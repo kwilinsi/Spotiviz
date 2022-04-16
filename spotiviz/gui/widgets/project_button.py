@@ -50,6 +50,7 @@ class ProjectButton(QPushButton):
         layout.addWidget(path_lbl)
 
         self.setLayout(layout)
-        self.setMaximumSize(500, 75)
+        self.setMinimumSize(400, 50)
+        self.setMaximumSize(750, 65)
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
                            QSizePolicy.Policy.Expanding)
