@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFrame
 )
 
+from spotiviz.gui.widgets.header import Header
 from spotiviz.gui.widgets import db_widgets
 
 
@@ -25,9 +26,7 @@ class HomeScreen(QMainWindow):
         main_buttons_layout.addWidget(btn_new)
 
         # Create list of recent projects
-        project_list_lbl = QLabel("Recent Projects")
-        project_list_lbl.setAlignment(
-            Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
+        project_list_lbl = Header("Recent Projects")
 
         project_list_layout.addWidget(project_list_lbl)
         for b in db_widgets.get_all_project_buttons():

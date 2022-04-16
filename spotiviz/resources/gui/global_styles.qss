@@ -6,3 +6,10 @@
 *[invalidPath="true"] {
     color: #a31f18;
 }
+
+Header {
+    font-size: 24px;
+    font-family: "Lato";
+    font-weight: bold;
+    color: #333333;
+}
