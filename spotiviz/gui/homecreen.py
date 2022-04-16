@@ -31,8 +31,14 @@ class HomeScreen(QMainWindow):
         project_list_lbl = Header("Recent Projects")
 
         project_list_layout.addWidget(project_list_lbl)
-        for b in db_widgets.get_all_project_buttons():
+        proj_buttons = db_widgets.get_all_project_buttons()
+        for b in proj_buttons:
             project_list_layout.addWidget(b)
+
+        if len(proj_buttons) == 0:
+            no_projects = QLabel("No recent projects. Create one to begin.")
+            no_projects.setProperty('noProjects', True)
+            project_list_layout.addWidget(no_projects)
 
         # Set padding and alignment
         page_layout.setContentsMargins(150, 50, 150, 50)

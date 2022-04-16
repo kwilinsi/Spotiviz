@@ -6,8 +6,15 @@
 *[invalidPath="true"] {
     color: #a31f18;
 }
+
 *[invalidPath="false"] {
     color: #555555;
+}
+
+*[noProjects="true"] {
+    color: #45201e;
+    font-size: 14px;
+    font-style: italic;
 }
 
 QLabel {
