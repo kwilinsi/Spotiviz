@@ -33,6 +33,7 @@ class ProjectButton(QPushButton):
         name_lbl = QLabel(project)
         if path is not None and os.path.isfile(path):
             path_lbl = QLabel(path)
+            path_lbl.setProperty('invalidPath', False)
         else:
             path_lbl = QLabel(path) if path is None else QLabel(
                 'Missing Database File')

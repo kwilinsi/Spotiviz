@@ -1,6 +1,7 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFrame
+    QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFrame, QWidget,
+    QSizePolicy
 )
 
 from spotiviz.gui.widgets.header import Header
@@ -36,14 +37,28 @@ class HomeScreen(QMainWindow):
         # Set padding and alignment
         page_layout.setContentsMargins(150, 50, 150, 50)
         page_layout.setSpacing(20)
-        project_list_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        main_buttons_layout.setContentsMargins(0, 0, 0, 30)
+        project_list_layout.setAlignment(Qt.AlignmentFlag.AlignTop |
+                                         Qt.AlignmentFlag.AlignHCenter)
 
         # Combine layouts
         page_layout.addLayout(main_buttons_layout)
         page_layout.addLayout(project_list_layout)
 
+
+        # Put everything in a frame to restrict its height
         frame = QFrame()
         frame.setLayout(page_layout)
-        self.setCentralWidget(frame)
+        frame.setMaximumHeight(page_layout.sizeHint().height())
+
+        # Put that frame in a layout
+        layout = QVBoxLayout()
+        layout.addWidget(frame)
+        layout.setAlignment(Qt.AlignmentFlag.AlignHCenter |
+                            Qt.AlignmentFlag.AlignVCenter)
+
+        w = QWidget()
+        w.setLayout(layout)
+        self.setCentralWidget(w)
 
         self.resize(800, 500)

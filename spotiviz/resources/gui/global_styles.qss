@@ -6,6 +6,9 @@
 *[invalidPath="true"] {
     color: #a31f18;
 }
+*[invalidPath="false"] {
+    color: #555555;
+}
 
 QLabel {
     font-family: "Lato";
