@@ -7,7 +7,7 @@ DROP TABLE IF EXISTS Downloads;
 DROP TABLE IF EXISTS StreamingHistories;
 DROP TABLE IF EXISTS StreamingHistoryRaw;
 DROP TABLE IF EXISTS StreamingHistory;
-DROP TABLE IF EXISTS Dates;
+DROP TABLE IF EXISTS ListenDates;
 
 /*
  * The Downloads table contains a list of Spotify downloads.
