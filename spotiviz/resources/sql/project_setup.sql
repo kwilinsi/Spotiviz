@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS StreamingHistories;
 DROP TABLE IF EXISTS StreamingHistoryRaw;
 DROP TABLE IF EXISTS StreamingHistory;
 DROP TABLE IF EXISTS ListenDates;
+DROP VIEW IF EXISTS StreamingHistoryFiltered;
 
 /*
  * The Downloads table contains a list of Spotify downloads.
@@ -105,3 +106,16 @@ CREATE TABLE ListenDates
     has_listen INTEGER NOT NULL CHECK (has_listen IN (0, 1)),
     is_missing BOOLEAN
 );
+
+/*
+ * This view is simply a selection of StreamingHistory that only includes songs
+ * with a known artist and track name. Unknown songs are preserved in the
+ * original table because they contribute to total listening time, but they
+ * are omitted here for convenience while aggregating lists of tracks and
+ * artists.
+ */
+CREATE VIEW StreamingHistoryFiltered AS
+SELECT *
+FROM StreamingHistory
+WHERE artist_name IS NOT 'Unknown Artist'
+  AND track_name IS NOT 'Unknown Track';
