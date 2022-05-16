@@ -55,26 +55,29 @@ INSERT INTO StreamingHistory
 WITH Merged AS (
     WITH SH AS (
         SELECT S.id,
-               row_number() over
+               row_number() OVER
                    (ORDER BY datetime(S.start_time), datetime(D.start_time))
-                   as strm_hist_pos1
+                   AS strm_hist_pos1
         FROM StreamingHistories S
-                 LEFT JOIN Downloads D on S.download_id = D.id
+                 LEFT JOIN Downloads D ON S.download_id = D.id
     )
 
     SELECT *,
-           strm_hist_pos1 as strm_hist_pos
+           strm_hist_pos1 AS strm_hist_pos
     FROM StreamingHistoryRaw
-             LEFT JOIN SH on StreamingHistoryRaw.history_id = SH.id
+             LEFT JOIN SH ON StreamingHistoryRaw.history_id = SH.id
     ORDER BY history_id, position
 )
 
-SELECT row_number() over (ORDER BY end_time, strm_hist_pos, position) as position,
+SELECT row_number() OVER (ORDER BY end_time, strm_hist_pos, position) AS position,
        end_time,
-       artist_name,
-       track_name,
+       Tracks.id                                                      AS track_id,
        ms_played
 FROM Merged
+         LEFT JOIN Artists ON
+    Artists.name = Merged.artist_name
+         LEFT JOIN Tracks ON
+    Tracks.artist_id = Artists.id AND Tracks.name = Merged.track_name
 
 GROUP BY end_time, artist_name, track_name, ms_played
 ORDER BY position;

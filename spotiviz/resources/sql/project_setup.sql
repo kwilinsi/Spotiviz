@@ -1,14 +1,19 @@
 /*
  * These SQL instructions set up the sqlite database for a specific project.
  * This is executed whenever a new project is created.
+ *
+ * This creates every permanent table and view used by the project.
  */
 
 DROP TABLE IF EXISTS Downloads;
 DROP TABLE IF EXISTS StreamingHistories;
 DROP TABLE IF EXISTS StreamingHistoryRaw;
+DROP TABLE IF EXISTS Artists;
+DROP TABLE IF EXISTS Tracks;
 DROP TABLE IF EXISTS StreamingHistory;
 DROP TABLE IF EXISTS ListenDates;
-DROP VIEW IF EXISTS StreamingHistoryFiltered;
+
+DROP VIEW IF EXISTS StreamingHistoryFull;
 
 /*
  * The Downloads table contains a list of Spotify downloads.
@@ -65,6 +70,42 @@ CREATE TABLE StreamingHistoryRaw
 );
 
 /*
+ * The Artists table is simply a list of artist names and ids (for smaller
+ * storage in other tables). It's used mainly for foreign key references.
+ *
+ * Note that this typically does NOT include an 'Unknown Artist' entry. If a
+ * listen was 'Unknown Track' by 'Unknown Artist', then that won't put 'Unknown
+ * Artist' in this table. But there are actual artists on Spotify with the name
+ * 'Unknown Artist'. If there's a listen to a valid track name by 'Unknown
+ * Artist', then it will appear in this table.
+ */
+CREATE TABLE Artists
+(
+    id   INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    UNIQUE (name)
+);
+
+/*
+ * This is similar to the Artists table, in that it's a list of track with
+ * a unique id used primarily for foreign key references. It helps with grouping
+ * by tracks because the group can be performed across only the id rather than
+ * both the artist and the track name.
+ *
+ * Note that this does NOT include an 'Unknown Track' entry unless a real track
+ * with that name was streamed. See the Artists table documentation for more
+ * information.
+ */
+CREATE TABLE Tracks
+(
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    artist_id INTEGER,
+    name      TEXT,
+    FOREIGN KEY (artist_id) REFERENCES Artists (id),
+    UNIQUE (artist_id, name)
+);
+
+/*
  * The StreamingHistory table is a duplicate of the StreamingHistoryRaw table
  * where the duplicate listens have been removed.
  *
@@ -74,11 +115,11 @@ CREATE TABLE StreamingHistoryRaw
  */
 CREATE TABLE StreamingHistory
 (
-    position    INTEGER,
-    end_time    TIMESTAMP,
-    artist_name TEXT,
-    track_name  TEXT,
-    ms_played   INTEGER
+    position  INTEGER PRIMARY KEY,
+    end_time  TIMESTAMP NOT NULL,
+    track_id  INTEGER,
+    ms_played INTEGER   NOT NULL,
+    FOREIGN KEY (track_id) REFERENCES Tracks (id)
 );
 
 /*
@@ -108,14 +149,16 @@ CREATE TABLE ListenDates
 );
 
 /*
- * This view is simply a selection of StreamingHistory that only includes songs
- * with a known artist and track name. Unknown songs are preserved in the
- * original table because they contribute to total listening time, but they
- * are omitted here for convenience while aggregating lists of tracks and
- * artists.
+ * This view is simply an expansion on StreamingHistory that uses joins with the
+ * Artists and Tracks tables to provide full artist and track names.
  */
-CREATE VIEW StreamingHistoryFiltered AS
-SELECT *
-FROM StreamingHistory
-WHERE artist_name IS NOT 'Unknown Artist'
-  AND track_name IS NOT 'Unknown Track';
+CREATE VIEW StreamingHistoryFull AS
+SELECT SH.position,
+       SH.track_id,
+       A.name AS artist,
+       T.name AS track,
+       SH.end_time,
+       SH.ms_played
+FROM StreamingHistory AS SH
+         LEFT JOIN Tracks T on T.id = SH.track_id
+         LEFT JOIN Artists A on A.id = T.artist_id;

@@ -4,6 +4,9 @@ PREPROCESSING_DIR = 'preprocessing'
 
 PROJECT_SETUP_SCRIPT = 'project_setup.sql'
 
+LOAD_ARTISTS_TRACKS_SCRIPT = os.path.join(PREPROCESSING_DIR,
+                                          'load_artists_tracks.sql')
+
 CLEAN_STREAMING_HISTORY_SCRIPT = os.path.join(PREPROCESSING_DIR,
                                               'clean_streaming_history.sql')
 

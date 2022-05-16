@@ -15,19 +15,22 @@ def main(project: str) -> None:
 
     The following preprocessing steps are performed on the given project:
 
-    1. Clean the streaming history in the database of the specified project.
+    1. Populate the Artists and Tracks tables with all the unique artist and
+       track names.
+
+    2. Clean the streaming history in the database of the specified project.
        This entails iterating through the data in the StreamingHistoryRaw table,
        removing duplicates, and transferring it to the StreamingHistory table.
 
-    2. Assemble a list of all the dates in the given download range, storing
+    3. Assemble a list of all the dates in the given download range, storing
        them in the ListenDates table. Label the dates according to whether
        they have listening data in the StreamingHistory table.
 
-    3. Identify dates that are missing, meaning they are not captured within
+    4. Identify dates that are missing, meaning they are not captured within
        the listening history range for any of the downloads in the project,
        and label them accordingly.
 
-    4. Look for any date anomalies, where a date was marked as has_listen =
+    5. Look for any date anomalies, where a date was marked as has_listen =
        TRUE and is_missing = TRUE. Obviously, it can't be both missing and
        have a listen recorded, so is_missing is set to FALSE in these cases.
 
@@ -42,6 +45,11 @@ def main(project: str) -> None:
     """
 
     LOG.debug('Started preprocessing for project {p}'.format(p=project))
+
+    # Populate Artists and Tracks tables
+    LOG.debug('  Loading artists and tracks...')
+    db.run_script(resc.get_sql_resource(sql.LOAD_ARTISTS_TRACKS_SCRIPT),
+                  db.get_conn(ut.get_database_path(project)))
 
     # Clean the streaming history
     LOG.debug('  Cleaning streaming history...')
