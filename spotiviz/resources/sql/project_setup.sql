@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS Artists;
 DROP TABLE IF EXISTS Tracks;
 DROP TABLE IF EXISTS StreamingHistory;
 DROP TABLE IF EXISTS ListenDates;
+DROP TABLE IF EXISTS TrackLengths;
 
 DROP VIEW IF EXISTS StreamingHistoryFull;
 
@@ -146,6 +147,29 @@ CREATE TABLE ListenDates
     day        DATE,
     has_listen INTEGER NOT NULL CHECK (has_listen IN (0, 1)),
     is_missing BOOLEAN
+);
+
+/*
+ * This is a list of tracks and the amount of time spent listening to them (in
+ * milliseconds). It stores the frequency of each listen time for each song.
+ * This is used to help determine which listens were likely skips.
+ *
+ * The skip column stores a single character flag denoting whether that listen
+ * length for that track should be considered a skip. It can take on the
+ * following values:
+ *   null - Unassigned state
+ *   S    - Skip
+ *   N    - Not a skip
+ */
+CREATE TABLE TrackLengths
+(
+    track_id        INTEGER,
+    ms_played       INTEGER,
+    frequency       INTEGER,
+    percent_listens REAL,
+    skip            TEXT,
+    FOREIGN KEY (track_id) REFERENCES Tracks (id),
+    UNIQUE (track_id, ms_played)
 );
 
 /*

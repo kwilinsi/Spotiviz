@@ -10,6 +10,9 @@ LOAD_ARTISTS_TRACKS_SCRIPT = os.path.join(PREPROCESSING_DIR,
 CLEAN_STREAMING_HISTORY_SCRIPT = os.path.join(PREPROCESSING_DIR,
                                               'clean_streaming_history.sql')
 
+LOAD_TRACK_LENGTHS_SCRIPT = os.path.join(PREPROCESSING_DIR,
+                                         'load_track_lengths.sql')
+
 CORRECT_DATE_ANOMALIES_SCRIPT = os.path.join(PREPROCESSING_DIR,
                                              'correct_date_anomalies.sql')
 

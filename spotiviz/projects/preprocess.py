@@ -22,15 +22,18 @@ def main(project: str) -> None:
        This entails iterating through the data in the StreamingHistoryRaw table,
        removing duplicates, and transferring it to the StreamingHistory table.
 
-    3. Assemble a list of all the dates in the given download range, storing
+    3. Populate the TrackLengths table with frequencies for each track and
+       ms_played pair.
+
+    4. Assemble a list of all the dates in the given download range, storing
        them in the ListenDates table. Label the dates according to whether
        they have listening data in the StreamingHistory table.
 
-    4. Identify dates that are missing, meaning they are not captured within
+    5. Identify dates that are missing, meaning they are not captured within
        the listening history range for any of the downloads in the project,
        and label them accordingly.
 
-    5. Look for any date anomalies, where a date was marked as has_listen =
+    6. Look for any date anomalies, where a date was marked as has_listen =
        TRUE and is_missing = TRUE. Obviously, it can't be both missing and
        have a listen recorded, so is_missing is set to FALSE in these cases.
 
@@ -54,6 +57,11 @@ def main(project: str) -> None:
     # Clean the streaming history
     LOG.debug('  Cleaning streaming history...')
     db.run_script(resc.get_sql_resource(sql.CLEAN_STREAMING_HISTORY_SCRIPT),
+                  db.get_conn(ut.get_database_path(project)))
+
+    # Populate TrackLengths table
+    LOG.debug('  Computing TrackLengths frequencies...')
+    db.run_script(resc.get_sql_resource(sql.LOAD_TRACK_LENGTHS_SCRIPT),
                   db.get_conn(ut.get_database_path(project)))
 
     # Set the list of dates
