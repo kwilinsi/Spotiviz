@@ -27,7 +27,7 @@ def clean_project_name(name: str) -> str:
     project. The project name is not cleaned in the main program database for
     the entire Spotiviz installation.
 
-    This also adds .db to the file name if it was not there initially. Note
+    This also adds .database to the file name if it was not there initially. Note
     that this is the only . that is allowed in the returned string.
 
     Args:
@@ -38,13 +38,13 @@ def clean_project_name(name: str) -> str:
     """
 
     n = name.lower()
-    return re.sub(r'[^\w-]', '', n[:-3] if n.endswith('.db') else n) + '.db'
+    return re.sub(r'[^\w-]', '', n[:-3] if n.endswith('.database') else n) + '.database'
 
 
 def get_database_path(project: str) -> str:
     """
     Given the name of a project, return the path to its SQLite database file.
-    This is found by querying the Projects table in the main program.db
+    This is found by querying the Projects table in the main program.database
     database.
 
     Args:

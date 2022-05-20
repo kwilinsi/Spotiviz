@@ -2,7 +2,7 @@ import os.path
 import sqlalchemy as sa
 
 from spotiviz import get_data
-from spotiviz.utils.constants import sql
+from spotiviz.db import constants
 
 
 def run_script(script: str, conn = None) -> None:
@@ -34,7 +34,7 @@ def run_script(script: str, conn = None) -> None:
 def get_engine(path: str):
     """
     Initialize a connection to the specified SQLite database file. If no path
-    is given (or it is None), a connection to the default projects.db file is
+    is given (or it is None), a connection to the default projects.database file is
     returned that governs the entire Spotiviz installation.
 
     Otherwise, a connection to the database at the specified path is returned.

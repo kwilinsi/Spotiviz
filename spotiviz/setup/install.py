@@ -2,9 +2,8 @@ import os.path
 
 from spotiviz import get_data
 from spotiviz.projects import manager
-from spotiviz.utils.constants import sql
 from spotiviz.utils.log import LOG
-from spotiviz.setup import initialize
+from spotiviz.database import db, constants as con
 
 
 def install_spotiviz():
@@ -21,18 +20,15 @@ def install_spotiviz():
     make_dir(get_data(os.path.join('sqlite', 'projects')), 'Projects')
 
     # Delete the program database, if it exists
-    db_path = get_data(os.path.join('sqlite', sql.DATABASE_PROGRAM_NAME))
-    if os.path.exists(db_path):
-        os.remove(db_path)
+    if os.path.exists(con.DATABASE_PROGRAM_PATH):
+        os.remove(con.DATABASE_PROGRAM_PATH)
 
     # Initialize database
-    initialize.init_db()
+    db.initialize()
 
     # Run installation script
     LOG.debug('Running installation script')
-    # db.run_script(re.get_sql_resource(sql.SCRIPT_SETUP))
-
-    from spotiviz.db import setup
+    # database.run_script(re.get_sql_resource(sql.SCRIPT_SETUP))
 
     # Delete any leftover projects
     manager.delete_all_projects()

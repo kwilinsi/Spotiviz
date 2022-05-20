@@ -50,7 +50,7 @@ def create_project(name: str, database_path: str = None) -> None:
     Create a new project. Add it to the main program database file,
     and create a new database specifically for this project.
 
-    Optionally, you can also specify a database_path where the SQLite .db file
+    Optionally, you can also specify a database_path where the SQLite .database file
     should be stored. If this is omitted or set to None, the database will be
     placed in the default directory: ~/spotiviz/data/sqlite/projects/.
 
