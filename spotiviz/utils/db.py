@@ -1,11 +1,11 @@
 import os.path
-import sqlite3
+import sqlalchemy as sa
 
 from spotiviz import get_data
 from spotiviz.utils.constants import sql
 
 
-def run_script(script: str, conn: sqlite3.Connection = None) -> None:
+def run_script(script: str, conn = None) -> None:
     """
     Run the specified script in the specified sqlite connection. If no
     connection is given, the default one to the program's main projects
@@ -31,7 +31,7 @@ def run_script(script: str, conn: sqlite3.Connection = None) -> None:
     conn.close()
 
 
-def get_conn(path: str = None) -> sqlite3.Connection:
+def get_engine(path: str):
     """
     Initialize a connection to the specified SQLite database file. If no path
     is given (or it is None), a connection to the default projects.db file is
@@ -49,14 +49,11 @@ def get_conn(path: str = None) -> sqlite3.Connection:
         A connection to the specified database.
     """
 
-    if path is None:
-        return sqlite3.connect(
-            get_data(os.path.join('sqlite', sql.DATABASE_PROGRAM_NAME)))
-    else:
-        return sqlite3.connect(path)
+    return sa.create_engine(f'sqlite:///{path}', echo=True)
 
 
-def get_last_id(conn: sqlite3.Connection) -> int:
+
+def get_last_id(conn) -> int:
     """
     Get the last ID from an auto incrementing column that was generated when
     inserting the most recent record with this connection.
@@ -69,3 +66,10 @@ def get_last_id(conn: sqlite3.Connection) -> int:
     """
 
     return conn.execute(sql.GET_LAST_ID).fetchone()[0]
+
+
+GLOBAL_ENGINE = get_engine(
+    get_data(os.path.join('sqlite', sql.DATABASE_PROGRAM_NAME)))
+
+
+PROJECT_ENGINE = None
