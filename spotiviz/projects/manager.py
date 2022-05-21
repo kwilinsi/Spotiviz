@@ -2,11 +2,14 @@ import datetime
 from datetime import date
 import os.path
 from typing import List, Tuple, Dict
+from sqlalchemy import delete
 
 from spotiviz import get_data
 from spotiviz.projects import (
     sql, preprocess, checks, utils as ut, spotifyDownload as sd)
-from spotiviz.utils import db, resources as resc
+from spotiviz.database import db
+from spotiviz.database.structure import program_struct
+from spotiviz.utils import resources as resc
 from spotiviz.utils.log import LOG
 
 
@@ -41,8 +44,8 @@ def delete_all_projects() -> None:
 
     # Clear the Projects table in the program-level database
     LOG.debug('Clearing Projects table')
-    with db.get_conn() as conn:
-        conn.execute(sql.CLEAR_ALL_PROJECTS)
+    with db.program_session() as session:
+        session.execute(delete(program_struct.Projects))
 
 
 def create_project(name: str, database_path: str = None) -> None:

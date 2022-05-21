@@ -2,7 +2,8 @@ from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
 from typing import List
 
-from spotiviz.utils import db, resources as resc
+from spotiviz.database import db
+from spotiviz.utils import resources as resc
 from spotiviz.utils.log import LOG
 from spotiviz.projects import sql, utils as ut
 

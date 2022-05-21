@@ -1,7 +1,7 @@
 import os.path
 from enum import Enum
 
-from spotiviz.utils import db
+from spotiviz.database import db
 from spotiviz.projects import sql, utils as ut
 
 

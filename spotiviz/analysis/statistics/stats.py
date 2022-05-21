@@ -4,7 +4,7 @@ from typing import Iterable, Tuple, Dict
 import sqlite3
 
 from spotiviz.analysis.statistics import utils as ut
-from spotiviz.utils import db
+from spotiviz.database import db
 from spotiviz.projects import checks, utils as proj_ut
 
 

@@ -3,7 +3,7 @@ import re
 from datetime import date, timedelta, datetime
 from typing import Optional, Iterable
 
-from spotiviz.utils import db
+from spotiviz.database import db
 from spotiviz.projects import sql
 
 # NOTE: This file intentionally does not have any dependencies within the

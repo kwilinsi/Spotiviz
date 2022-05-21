@@ -1,11 +1,9 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import Session
 
 from spotiviz.database import constants as con
 
 GLOBAL_ENGINE = None
-
-Session = scoped_session(sessionmaker())
 
 
 def initialize() -> None:
@@ -15,8 +13,20 @@ def initialize() -> None:
         None
     """
 
-    global GLOBAL_ENGINE, Session
+    global GLOBAL_ENGINE
 
     GLOBAL_ENGINE = create_engine(f'sqlite:///{con.DATABASE_PROGRAM_PATH}',
                                   echo=True, future=True)
-    Session.configure(bind=GLOBAL_ENGINE)
+
+
+def program_session() -> Session:
+    """
+    Return a new Session instance created from the GLOBAL_ENGINE. Note that
+    the engine must be initialized with db.initialize() first.
+
+    Returns:
+        A new session instance.
+
+    """
+
+    return Session(GLOBAL_ENGINE)

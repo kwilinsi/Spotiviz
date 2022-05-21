@@ -47,7 +47,7 @@ class StreamingHistories(Base, ReprModel):
     first listen in the streaming history.
     """
     __tablename__ = "StreamingHistories"
-    __table_args__ = UniqueConstraint('download_id', 'file_name')
+    __table_args__ = (UniqueConstraint('download_id', 'file_name'),)
 
     # This implicitly auto-increments in SQLite
     id = Column(Integer, primary_key=True)

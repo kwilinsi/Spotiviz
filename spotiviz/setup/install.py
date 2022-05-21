@@ -3,7 +3,7 @@ import os.path
 from spotiviz import get_data
 from spotiviz.projects import manager
 from spotiviz.utils.log import LOG
-from spotiviz.database import db, constants as con
+from spotiviz.database import db, setup, constants as con
 
 
 def install_spotiviz():
@@ -28,10 +28,7 @@ def install_spotiviz():
 
     # Run installation script
     LOG.debug('Running installation script')
-    # database.run_script(re.get_sql_resource(sql.SCRIPT_SETUP))
-
-    # Delete any leftover projects
-    manager.delete_all_projects()
+    setup.setup_program_db()
 
 
 def make_dir(path: str, name: str) -> None:

@@ -3,7 +3,7 @@ import os
 from typing import List
 from datetime import date
 
-from spotiviz.utils import db
+from spotiviz.database import db
 from spotiviz.utils.log import LOG
 from spotiviz.projects import checks, sql, utils as ut, fileType as ft
 
