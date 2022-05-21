@@ -7,7 +7,7 @@ from sqlalchemy import delete
 from spotiviz import get_data
 from spotiviz.projects import (
     sql, preprocess, checks, utils as ut, spotifyDownload as sd)
-from spotiviz.database import db
+from spotiviz.database import db, setup
 from spotiviz.database.structure.program_struct import Projects
 from spotiviz.utils import resources as resc
 from spotiviz.utils.log import LOG
@@ -178,6 +178,7 @@ def create_project_database(path: str) -> None:
         None
     """
 
+    setup.setup_project_db()
     db.run_script(resc.get_sql_resource(sql.PROJECT_SETUP_SCRIPT),
                   db.get_conn(path))
 

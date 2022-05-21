@@ -42,13 +42,13 @@ def clean_project_name(name: str) -> str:
 
     n = name.lower()
     return re.sub(r'[^\w-]', '',
-                  n[:-3] if n.endswith('.database') else n) + '.database'
+                  n[:-3] if n.endswith('.db') else n) + '.db'
 
 
 def get_database_path(project: str) -> str:
     """
     Given the name of a project, return the path to its SQLite database file.
-    This is found by querying the Projects table in the main program.database
+    This is found by querying the Projects table in the main program.db
     database.
 
     Args:
