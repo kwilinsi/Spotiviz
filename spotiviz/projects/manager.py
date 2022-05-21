@@ -8,7 +8,7 @@ from spotiviz import get_data
 from spotiviz.projects import (
     sql, preprocess, checks, utils as ut, spotifyDownload as sd)
 from spotiviz.database import db
-from spotiviz.database.structure import program_struct
+from spotiviz.database.structure.program_struct import Projects
 from spotiviz.utils import resources as resc
 from spotiviz.utils.log import LOG
 
@@ -45,7 +45,7 @@ def delete_all_projects() -> None:
     # Clear the Projects table in the program-level database
     LOG.debug('Clearing Projects table')
     with db.program_session() as session:
-        session.execute(delete(program_struct.Projects))
+        session.execute(delete(Projects))
 
 
 def create_project(name: str, database_path: str = None) -> None:
@@ -53,7 +53,8 @@ def create_project(name: str, database_path: str = None) -> None:
     Create a new project. Add it to the main program database file,
     and create a new database specifically for this project.
 
-    Optionally, you can also specify a database_path where the SQLite .database file
+    Optionally, you can also specify a database_path where the SQLite
+    .database file
     should be stored. If this is omitted or set to None, the database will be
     placed in the default directory: ~/spotiviz/data/sqlite/projects/.
 
@@ -156,8 +157,11 @@ def create_project_entry(name: str, database_path: str) -> None:
         None
     """
 
-    with db.get_conn() as conn:
-        conn.execute(sql.ADD_PROJECT_ENTRY, (name, database_path))
+    with db.program_session() as session:
+        project = Projects(name=name,
+                           database_path=database_path)
+        session.add(project)
+        session.commit()
 
 
 def create_project_database(path: str) -> None:

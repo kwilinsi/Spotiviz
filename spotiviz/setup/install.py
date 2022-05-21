@@ -30,6 +30,9 @@ def install_spotiviz():
     LOG.debug('Running installation script')
     setup.setup_program_db()
 
+    # Delete old project files
+    manager.delete_all_projects()
+
 
 def make_dir(path: str, name: str) -> None:
     """

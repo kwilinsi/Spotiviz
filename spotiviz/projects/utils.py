@@ -2,8 +2,10 @@ import datetime
 import re
 from datetime import date, timedelta, datetime
 from typing import Optional, Iterable
+from sqlalchemy import select
 
 from spotiviz.database import db
+from spotiviz.database.structure.program_struct import Projects
 from spotiviz.projects import sql
 
 # NOTE: This file intentionally does not have any dependencies within the
@@ -27,7 +29,8 @@ def clean_project_name(name: str) -> str:
     project. The project name is not cleaned in the main program database for
     the entire Spotiviz installation.
 
-    This also adds .database to the file name if it was not there initially. Note
+    This also adds .database to the file name if it was not there initially.
+    Note
     that this is the only . that is allowed in the returned string.
 
     Args:
@@ -38,7 +41,8 @@ def clean_project_name(name: str) -> str:
     """
 
     n = name.lower()
-    return re.sub(r'[^\w-]', '', n[:-3] if n.endswith('.database') else n) + '.database'
+    return re.sub(r'[^\w-]', '',
+                  n[:-3] if n.endswith('.database') else n) + '.database'
 
 
 def get_database_path(project: str) -> str:
@@ -57,9 +61,11 @@ def get_database_path(project: str) -> str:
         ValueError: If the given project does not exist.
     """
 
-    with db.get_conn() as conn:
+    with db.program_session() as session:
         try:
-            return conn.execute(sql.GET_PROJECT_PATH, (project,)).fetchone()[0]
+            r = session.scalars(
+                select(Projects.database_path).where(Projects.name == project))
+            return r.one()
         except Exception:
             raise ValueError("There is no project '{p}'".format(p=project))
 

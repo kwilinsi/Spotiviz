@@ -9,7 +9,7 @@ import os.path
 from spotiviz import get_data
 
 # The path to the main database with the Spotiviz installation data
-DATABASE_PROGRAM_PATH = get_data(os.path.join('sqlite', 'program.database'))
+DATABASE_PROGRAM_PATH = get_data(os.path.join('sqlite', 'program.db'))
 
 # The setup script for initializing the main database
 SCRIPT_SETUP = 'setup.sql'

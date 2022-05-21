@@ -19,7 +19,6 @@ class Projects(Base, ReprModel):
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
     def __repr__(self) -> str:
-        return self._repr(id=self.id,
-                          name=self.name,
+        return self._repr(name=self.name,
                           database_path=self.database_path,
                           created_at=self.created_at)
