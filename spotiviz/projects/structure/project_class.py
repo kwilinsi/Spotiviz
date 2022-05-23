@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
+import sqlalchemy as sa
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -130,6 +131,20 @@ class Project:
                 raise NameError(f'Project {self} not in SQL database. '
                                 f'Path cannot be updated.')
 
+    def initialize_engine(self) -> sa.engine.Engine:
+        """
+        Initialize the SQLAlchemy engine for this project's SQLite database
+        file. This is necessary for using self.open_session() later.
+
+        Note that this does not install the database. For that,
+        use self.create_database().
+
+        Returns:
+            The engine instance.
+        """
+
+        return db.initialize_project_engine(self.name, self.path)
+
     def open_session(self) -> Session:
         """
         Open a SQLAlchemy session connected to the project's SQLite database
@@ -152,9 +167,7 @@ class Project:
             None
         """
 
-        setup.setup_project_db(
-            db.initialize_project_engine(self.name, self.path)
-        )
+        setup.setup_project_db(self.initialize_engine())
 
     def add_download(self,
                      path: str,
