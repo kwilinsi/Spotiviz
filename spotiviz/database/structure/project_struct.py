@@ -13,6 +13,28 @@ from spotiviz.database.structure.template import ReprModel
 Base = declarative_base()
 
 
+class Config(Base, ReprModel):
+    """
+    This table stores configurations that control certain aspects of the data
+    processing and analysis. These can be changed by the end-user.
+
+    Config entries are in the form of key-value pairs. The key is the name of
+    the setting, and the value is its current state.
+
+    The value column can of course contain many data types. Therefore,
+    it is stored here as TEXT, which can later be parsed into other types.
+    """
+
+    __tablename__ = 'Config'
+
+    key: Column = Column(TEXT, primary_key=True)
+    value: Column = Column(TEXT)
+
+    def __repr__(self) -> str:
+        return self._repr(key=self.key,
+                          value=self.value)
+
+
 class Downloads(Base, ReprModel):
     """
     The Downloads table contains a list of Spotify downloads.
