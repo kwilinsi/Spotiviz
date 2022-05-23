@@ -87,6 +87,8 @@ def main(project: pc.Project) -> None:
                 sql.CORRECT_DATE_ANOMALIES_SCRIPT)) as f:
             session.execute(text(f.read()))
 
+        session.commit()
+
 
 def populate_listen_dates(session: Session) -> None:
     """
