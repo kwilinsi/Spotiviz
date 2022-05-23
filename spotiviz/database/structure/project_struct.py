@@ -4,7 +4,7 @@ This models the SQLite database structure for each project database file.
 
 from sqlalchemy import Column, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects.sqlite import (
-    BOOLEAN, CHAR, DATE, DATETIME, FLOAT, INTEGER, TEXT
+    BOOLEAN, DATE, DATETIME, FLOAT, INTEGER, TEXT
 )
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -253,7 +253,7 @@ class TrackLengths(Base, ReprModel):
     frequency: Column = Column(INTEGER, nullable=False)
     percent_listens: Column = Column(FLOAT, nullable=False)
     # Skips are initially null and is filled later with a Python script
-    skip: Column = Column(CHAR)
+    skip: Column = Column(INTEGER)
 
     track = relationship('Tracks', back_populates='track_lengths')
 

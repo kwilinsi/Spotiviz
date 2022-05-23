@@ -9,13 +9,16 @@ This code populates the `skip` column within that table with a flag to
 indicate whether it is determined to be a skip.
 """
 import enum
-import sqlite3
-from typing import Optional
-
+from typing import Optional, List
 import pandas as pd
+from sqlalchemy import select
+from itertools import groupby
 
 from spotiviz.utils.log import LOG
 from spotiviz.projects import utils as ut
+from spotiviz.projects.structure import project_class as pc
+
+from spotiviz.database.structure.project_struct import TrackLengths
 
 # The minimum duration a track must play for in order for it not to be counted
 # a skip (assuming no duration has a frequency of 2 or more). This is given
@@ -51,20 +54,18 @@ class SkipState(enum.Enum):
     enum is how it will be stored in the SQLite database.
     """
 
-    SKIP = 'S'
-    NON_SKIP = 'N'
+    SKIP = 1
+    NON_SKIP = 2
 
 
-def determine_skips(project: str) -> None:
+def determine_skips(project: pc.Project) -> None:
     """
-    Go through each of the durations that each song was played for by iterating
-    over the TrackLengths table.
-
-    Precondition:
-        The given project name MUST be valid, as it is not checked.
+    For each track recorded in a project, go through each of the durations that
+    it was played for by iterating over the TrackLengths table. Determine
+    which of those durations should be marked a SKIP.
 
     Args:
-        project: The name of the project (MUST be valid--not checked).
+        project: The project to process.
 
     Returns:
         None
@@ -72,67 +73,78 @@ def determine_skips(project: str) -> None:
 
     LOG.debug('Loading TrackLengths table...')
 
-    # Get the TrackLengths table as a pandas dataframe
-    with db.get_conn(ut.get_database_path(project)) as conn:
-        track_lengths = pd.read_sql_query('SELECT track_id, ms_played, '
-                                          'frequency, percent_listens '
-                                          'FROM TrackLengths;', conn)
+    # Get the TrackLengths table as a pandas DataFrame
+    with project.open_session() as session:
+        track_durations = session.scalars(
+            select(TrackLengths).order_by(TrackLengths.track_id)).all()
 
-    # Add an empty skip column
-    track_lengths['skip'] = ''
+        # Group by tracks
+        tracks = [list(t[1])
+                  for t in groupby(track_durations, lambda x: x.track_id)]
 
-    # Process each track, identifying skips
-    LOG.debug('Identifying skips...')
+        LOG.debug('Identifying skips...')
 
-    grouped = track_lengths.groupby('track_id').apply(
-        _determine_skips_for_track)
+        # Each track group is a collection of durations
+        for track in tracks:
+            _determine_skips_for_track(track)
 
-    # Save to database
-    LOG.debug('Saving to database...')
+        # Save to database
+        LOG.debug('Saving to database...')
 
-    with db.get_conn(ut.get_database_path(project)) as conn:
-        for t, d, s in zip(grouped['track_id'], grouped['ms_played'],
-                           grouped['skip']):
-            save_skip_datum(t, d, s, conn)
+        session.commit()
 
 
-def _determine_skips_for_track(df: pd.DataFrame) -> pd.DataFrame:
+def _determine_skips_for_track(
+        durations: List[TrackLengths]) -> List[TrackLengths]:
     """
     Go through each of the distinct durations for a specific track, marking
     each one as a SKIP or NON_SKIP.
 
     Args:
-        df: A DataFrame containing all the entries from TrackLengths for a
-            specific track. This must always contain at least one row,
-            and all the rows must have the same track_id.
+        durations: A list of TrackLengths objects, one for each of the
+                   durations that a certain track was played for. This must
+                   always contain at least one element, and all elements must
+                   have the same track_id.
 
     Returns:
-        The modified DataFrame.
+        The modified list, with the skip data members modified for each
+        TrackLengths object.
     """
 
-    df['skip'] = [check_frequency(f, p)
-                  for f, p in zip(df['frequency'], df['percent_listens'])]
+    any_non_skips = False
+
+    for d in durations:
+        d.skip = check_frequency(d.frequency, d.percent_listens)
+        if d.skip:
+            any_non_skips = True
 
     # If nothing was marked a NON_SKIP, mark the longest duration that's at
     # least the MIN_TRACK_LENGTH as a NON_SKIP, and leave the others to be
     # marked SKIP. It's assumed that the longest duration is the first one.
-    if len(df[df['skip'] == SkipState.NON_SKIP]) == 0:
-        if df['ms_played'].iloc[0] >= MIN_TRACK_LENGTH:
-            df['skip'].iloc[0] = SkipState.NON_SKIP
+    if not any_non_skips:
+        if durations[0].ms_played >= MIN_TRACK_LENGTH:
+            durations[0].skip = SkipState.NON_SKIP
 
     # Determine the shortest duration (ms_played) that was marked NON_SKIP
-    shortest_non_skip = df[df['skip'] == SkipState.NON_SKIP]['ms_played'].min()
+    non_skips = [d.ms_played
+                 for d in durations if d.skip == SkipState.NON_SKIP]
+    shortest_non_skip = min(non_skips) if non_skips else None
 
     # Any durations either longer than the shortest_non_skip duration or
     # within a certain percentage of it are marked NON_SKIP as well
-    df['skip'] = [check_duration(m, shortest_non_skip, s)
-                  for m, s in zip(df['ms_played'], df['skip'])]
+    for d in durations:
+        d.skip = check_duration(d.ms_played, shortest_non_skip, d.skip)
 
     # Lastly, any unset values become SKIP
-    df['skip'] = [SkipState.SKIP if s != SkipState.NON_SKIP else s
-                  for s in df['skip']]
+    for d in durations:
+        if d.skip != SkipState.NON_SKIP:
+            d.skip = SkipState.SKIP
 
-    return df
+    # Clean up by converting SkipStates to integers
+    for d in durations:
+        d.skip = d.skip.value
+
+    return durations
 
 
 def check_frequency(frequency: int,
@@ -203,7 +215,7 @@ def check_duration(duration: int,
 def save_skip_datum(track_id: int,
                     ms_played: int,
                     skip: SkipState,
-                    conn: sqlite3.Connection) -> None:
+                    conn) -> None:
     """
     Save skip data for a single row to the TrackLengths table.
 
