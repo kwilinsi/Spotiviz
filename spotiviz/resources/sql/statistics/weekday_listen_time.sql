@@ -4,9 +4,9 @@
  */
 
 WITH DailyListens AS (SELECT STRFTIME('%Y-%m-%d', end_time)  AS date,
-                             COUNT(artist_name)              AS listens,
+                             COUNT(artist)                   AS listens,
                              SUM(ms_played) / 1000 / 60 / 60 AS avg_listen_hours
-                      FROM StreamingHistory
+                      FROM StreamingHistoryFull
                       GROUP BY date)
 SELECT STRFTIME('%w', D.day)                         AS weekday,
        ROUND(AVG(IFNULL(DL.listens, 0)), 3)          AS avg_listens,
