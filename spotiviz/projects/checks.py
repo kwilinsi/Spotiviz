@@ -1,8 +1,10 @@
 import os.path
 from enum import Enum
+from sqlalchemy import select
 
-from spotiviz.utils import db
-from spotiviz.projects import sql, utils as ut
+from spotiviz.database import db
+from spotiviz.database.structure.program_struct import Projects
+from spotiviz.projects import utils as ut
 
 
 class ProjectState(Enum):
@@ -37,9 +39,9 @@ def enforce_project_exists(project: str) -> None:
 
     state = project_state(project)
     if state == ProjectState.UNDEFINED:
-        raise ValueError("Unrecognized project name '{p}'".format(p=project))
+        raise ValueError(f'Unrecognized project name \'{project}\'')
     elif state == ProjectState.MISSING_DATABASE:
-        raise ValueError("Project '{p}' missing database".format(p=project))
+        raise ValueError(f'Project \'{project}\' missing database')
 
 
 def project_state(name: str) -> ProjectState:
@@ -61,20 +63,15 @@ def project_state(name: str) -> ProjectState:
         True if project exists; otherwise False.
     """
 
-    # TODO I suspect this doesn't work if one project 'abC d' is created and
-    #  then another project 'abcd' is created. The second one will find a
-    #  database but no sql entry and it'll try to make a second sql entry for
-    #  the same database which is already in use by 'abC d'.
-
     # Check whether there's a project entry with this name (not cleaned) in the
     # Projects table
-    with db.get_conn() as conn:
-        entry_exists = bool(
-            conn.execute(sql.CHECK_PROJECT_EXISTS, (name,)).fetchone())
+    with db.session() as session:
+        result = session.scalars(
+            select(Projects.name).where(Projects.name == name))
 
-    # If there is no entry, the project doesn't exist. Return UNDEFINED.
-    if not entry_exists:
-        return ProjectState.UNDEFINED
+        # If there is no entry, the project doesn't exist. Return UNDEFINED.
+        if not result.all():
+            return ProjectState.UNDEFINED
 
     # If there is an entry, get the database path
     path = ut.get_database_path(name)

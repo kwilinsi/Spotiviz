@@ -17,3 +17,4 @@ FROM (SELECT CAST(SUM(ms_played) AS REAL) / 1000 / 60 / 60 AS hours
      (SELECT COUNT(day) AS days
       FROM ListenDates
       WHERE is_missing = FALSE);
+

@@ -2,15 +2,17 @@ import os.path
 
 from spotiviz import get_data
 from spotiviz.projects import manager
-from spotiviz.utils import db, resources as re
-from spotiviz.utils.constants import sql
 from spotiviz.utils.log import LOG
+from spotiviz.database import db, setup, constants as con
 
 
 def install_spotiviz():
     """
     Install the Spotiviz application. This primarily entails the creation of
     a database for storing projects.
+
+    If there is already a program database file, it is deleted, and a new one
+    is created.
     """
 
     LOG.debug('Starting Spotiviz installation')
@@ -21,12 +23,17 @@ def install_spotiviz():
     make_dir(get_data(os.path.join('sqlite', 'projects')), 'Projects')
 
     # Delete the program database, if it exists
+    if os.path.exists(con.DATABASE_PROGRAM_PATH):
+        os.remove(con.DATABASE_PROGRAM_PATH)
+
+    # Initialize database
+    db.initialize()
 
     # Run installation script
     LOG.debug('Running installation script')
-    db.run_script(re.get_sql_resource(sql.SCRIPT_SETUP))
+    setup.setup_program_db()
 
-    # Delete any leftover projects
+    # Delete old project files
     manager.delete_all_projects()
 
 

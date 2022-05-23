@@ -1,12 +1,16 @@
-import datetime
-from datetime import date
 import os.path
-from typing import List, Tuple, Dict
+from typing import List, Tuple
+
+from sqlalchemy import delete, select
 
 from spotiviz import get_data
-from spotiviz.projects import (
-    sql, preprocess, checks, utils as ut, spotifyDownload as sd)
-from spotiviz.utils import db, resources as resc
+
+from spotiviz.projects import preprocess, checks, utils as ut
+from spotiviz.projects.structure import project_class as pc
+
+from spotiviz.database import db
+from spotiviz.database.structure.program_struct import Projects
+
 from spotiviz.utils.log import LOG
 
 
@@ -32,60 +36,87 @@ def delete_all_projects() -> None:
     projects_dir = get_data(os.path.join('sqlite', 'projects'))
 
     for file_name in os.listdir(projects_dir):
-        f = os.path.join(projects_dir, file_name)
-        if os.path.isfile(f):
+        path = os.path.join(projects_dir, file_name)
+        if os.path.isfile(path):
             try:
-                os.remove(f)
+                os.remove(path)
             except OSError:
-                LOG.debug('Failed to delete project database: {p}'.format(p=f))
+                LOG.warn(f'Failed to delete project database: \'{path}\'')
 
     # Clear the Projects table in the program-level database
     LOG.debug('Clearing Projects table')
-    with db.get_conn() as conn:
-        conn.execute(sql.CLEAR_ALL_PROJECTS)
+    with db.session() as session:
+        session.execute(delete(Projects))
 
 
-def create_project(name: str, database_path: str = None) -> None:
+def create_project(name: str, database_path: str = None) -> pc.Project:
     """
     Create a new project. Add it to the main program database file,
     and create a new database specifically for this project.
 
-    Optionally, you can also specify a database_path where the SQLite .db file
-    should be stored. If this is omitted or set to None, the database will be
-    placed in the default directory: ~/spotiviz/data/sqlite/projects/.
+    Optionally, you can also specify a database_path where the SQLite
+    .database file should be stored. If this is omitted or set to None,
+    the database will be placed in the default directory:
+    .../spotiviz/data/sqlite/projects/.
 
     Args:
         name: The name of the project.
         database_path: [Optional] The path to the SQLite database file.
 
     Returns:
-        None
+        The newly created project.
+
+    Raises:
+        ValueError: If a project with the given name already exists in the
+                    program database.
+        AssertionError: If there's already an old database file at the
+                        selected path, and it can't be removed for some reason
+                        (ex. it's currently in use).
     """
 
     # Check for preexistence of a project with this name
     state = checks.project_state(name)
+
+    # If it already exists, throw an error
     if state == checks.ProjectState.EXISTS:
-        LOG.error("Attempted to create already-existing "
-                  "project '{p}'".format(p=name))
-        return
+        raise ValueError(f'Attempted to create already-existing '
+                         f'project \'{name}\'')
 
     # Determine where the project's SQLite database file will be stored
     path = __determine_project_path(project_name=name, path=database_path)
 
+    # Instantiate a new project instance
+    project = pc.Project(name, path)
+
     # If the project already exists, but it's missing a database, simply create
     # a new database file.
     if state == checks.ProjectState.MISSING_DATABASE:
-        create_project_database(path)
-        update_project_database_path(name, path)
-        LOG.info("Project '{p}' found with missing database. "
-                 "Created new database at '{d}'".format(p=name, d=path))
-        return
+        project.create_database()
+        project.update_database()
+        LOG.info(f'Project {project} found with missing database. '
+                 f'Created new database at \'{path}\'')
+        return project
+
+    # If there's already a file at the selected database path, delete that
+    # file, as its contents are unknown.
+    if os.path.exists(path):
+        LOG.debug(f'Deleting unexpected database file at \'{path}\'')
+        try:
+            os.remove(path)
+        except PermissionError:
+            raise AssertionError(f'Failed to create a new project {project}. '
+                                 f'Couldn\'t remove the old SQLite database '
+                                 f'file. The file may be in use by another '
+                                 f'process (PermissionError): '
+                                 f'\'{path}\'') from None
 
     # At this point, the project simply doesn't exist yet. Create a SQL entry
     # and a database file for it.
-    create_project_entry(name, path)
-    create_project_database(path)
-    LOG.info("Created a new project: '{p}'".format(p=name))
+    project.create_database()
+    project.save_to_database()
+    LOG.info(f'Created a new project: {project}')
+
+    return project
 
 
 def __determine_project_path(project_name: str, path: str = None) -> str:
@@ -132,66 +163,7 @@ def __determine_project_path(project_name: str, path: str = None) -> str:
         return os.path.abspath(path)
 
 
-def create_project_entry(name: str, database_path: str) -> None:
-    """
-    Create the entry for a project in the main sqlite database for this
-    Spotiviz installation.
-
-    If the given project is already in the projects table, nothing happens
-    and no data is overwritten.
-
-    Note that the project name doesn't need to be cleaned with
-    clean_project_name(). Cleaning is only used while referencing the
-    database file, not storing the project name in the SQL database or
-    displaying it to the user.
-
-    Args:
-        name: The name of the project.
-        database_path: The path to the SQLite database file.
-
-    Returns:
-        None
-    """
-
-    with db.get_conn() as conn:
-        conn.execute(sql.ADD_PROJECT_ENTRY, (name, database_path))
-
-
-def create_project_database(path: str) -> None:
-    """
-    Create a SQLite database file at the specified path. Perform the
-    initial setup of the SQL environment to make it a project.
-
-    IMPORTANT: If there is already a file at this path, it will be overwritten.
-
-    Args:
-        path: The path to the SQLite database file.
-
-    Returns:
-        None
-    """
-
-    db.run_script(resc.get_sql_resource(sql.PROJECT_SETUP_SCRIPT),
-                  db.get_conn(path))
-
-
-def update_project_database_path(project: str, path: str) -> None:
-    """
-    Update a project to use a new database file.
-
-    Args:
-        project: The name of the project.
-        path: The path to the new database file.
-
-    Returns:
-        None
-    """
-
-    with db.get_conn() as conn:
-        conn.execute(sql.UPDATE_PROJECT_PATH, (project, path))
-
-
-def preprocess_data(project: str) -> None:
+def preprocess_data(project: pc.Project) -> None:
     """
     First, check to make sure that a project with the specified name
     actually exists. If it does call the main preprocessing function.
@@ -207,72 +179,90 @@ def preprocess_data(project: str) -> None:
     """
 
     # Ensure the project exists first
-    checks.enforce_project_exists(project)
+    checks.enforce_project_exists(project.name)
 
     preprocess.main(project)
 
 
-def add_download(project: str, path: str,
-                 name: str = None, download_date: date = None) -> None:
-    """
-    Create a SpotifyDownload, process it, and save it to the specified
-    project all at once.
-
-    Args:
-        project: The name of the project.
-        path: The path to the directory with the spotify download.
-        name: The name to give the download (or omit to default to the name
-              of the bottom-level directory in the path).
-        download_date: The date that the download was requested from Spotify.
-
-    Returns:
-        None
-    """
-
-    d = sd.SpotifyDownload(project, path, name, download_date)
-    d.save()
-
-
-def build_project(project: str, root_dir: str,
+def build_project(name: str, root_dir: str,
                   paths: List[Tuple[str, str]],
                   database_path: str = None) -> None:
     """
-    Create a new project with the specified name. Then bulk add downloads to
-    it, saving both the download information and the streaming histories.
-    Then clean the streaming histories, merging them into one file.
+    This is a convenience method to create a new project with a list of
+    Spotify downloads. It performs the following tasks:
+
+    1. Create a new project with the specified name. Add its information to the
+    global, program-level database. Create a new SQLite database file for the
+    project.
+
+    2. Add the provided Spotify downloads to the project, saving both the
+    download information and the streaming histories.
+
+    3. Finally, clean the streaming histories, merging them into one table.
 
     Args:
-        project: The project.
+        name: The project name.
         root_dir: The root directory in which all the paths can be found.
         paths: A list of tuples for each downloads to add to the project.
-               Each tuple should be the path to a download within the root_dir
-               and the date the download was requested from Spotify.
+               Each tuple should include the path to a download within the
+               root_dir and the date the download was requested from Spotify.
+               The date should be in the format "%Y-%m-%d". Dates will be
+               checked later and possibly adjusted if incorrect.
         database_path: [Optional] A path to the SQLite database file for
-                       storing the project data.
+                       storing the project data. If this is omitted,
+                       the default location is used.
 
     Returns:
         None
     """
 
-    create_project(project, database_path)
+    project = create_project(name, database_path)
+
     for path, d in paths:
-        add_download(project, os.path.join(root_dir, path),
-                     download_date=ut.to_date(d))
+        project.add_download(os.path.join(root_dir, path),
+                             download_date=ut.to_date(d))
 
     preprocess_data(project)
 
 
-def get_all_projects() -> Dict[str, Tuple[str, datetime.datetime]]:
+def get_all_projects() -> List[pc.Projects]:
     """
     Get a list of all the projects registered in the Projects table.
 
-    This is given as a Python dictionary. Each project name is a key, and the
-    values are tuples of the database path and the creation timestamp.
-
     Returns:
-        A dictionary with each project name listed as a key.
+        A list of all the projects as SQLAlchemy-based Projects objects.
     """
 
-    with db.get_conn() as conn:
-        result = conn.execute(sql.GET_ALL_PROJECTS)
-        return {p[0]: (p[1], ut.to_datetime(p[2])) for p in result}
+    with db.session() as session:
+        return session.scalars(select(Projects)).all()
+
+
+def get_project(project_name: str) -> pc.Project:
+    """
+    Given a project's name, return its Project instance. This assumes that
+    the project has already been created and is listed in the global database
+    Projects table.
+
+    Args:
+        project_name: The name of the project.
+
+    Returns:
+        The Project instance for the desired project.
+
+    Raises:
+        ValueError: If there is no project with the given name, either
+                    because it is not listed in the Projects table or because
+                    it's missing a database file. Or because there was some
+                    error retrieving the project from the database.
+    """
+
+    checks.enforce_project_exists(project_name)
+
+    with db.session() as session:
+        try:
+            sql_project = session.scalars(
+                select(Projects).where(Projects.name == project_name)).one()
+            # Create a Project instance from the SQL data
+            return pc.Project.from_sql(sql_project)
+        except Exception:
+            raise ValueError(f'Failed to get project \'{project_name}\'')
