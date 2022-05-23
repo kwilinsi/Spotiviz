@@ -3,6 +3,7 @@ from dateutil.relativedelta import relativedelta
 from typing import List
 
 from sqlalchemy import func, select, text
+from sqlalchemy.dialects.sqlite import DATE
 from sqlalchemy.orm import Session
 
 from spotiviz.utils import resources as resc
@@ -60,7 +61,9 @@ def main(project: pc.Project) -> None:
     with project.open_session() as session:
         # Populate Artists and Tracks tables
         LOG.debug('  Loading artists and tracks...')
-        with open(resc.get_sql_resource(sql.LOAD_ARTISTS_TRACKS_SCRIPT)) as f:
+        with open(resc.get_sql_resource(sql.LOAD_ARTISTS_SCRIPT)) as f:
+            session.execute(text(f.read()))
+        with open(resc.get_sql_resource(sql.LOAD_TRACKS_SCRIPT)) as f:
             session.execute(text(f.read()))
 
         # Clean the streaming history
@@ -75,12 +78,8 @@ def main(project: pc.Project) -> None:
             session.execute(text(f.read()))
 
         # Set the list of dates
-        LOG.debug('  Listing dates...')
-        list_dates(session)
-
-        # Find missing dates
-        LOG.debug('  Identifying missing dates...')
-        identify_missing_dates(session)
+        LOG.debug('  Classifying dates...')
+        populate_listen_dates(session)
 
         # Correct date anomalies
         LOG.debug('  Correcting date anomalies...')
@@ -89,7 +88,7 @@ def main(project: pc.Project) -> None:
             session.execute(text(f.read()))
 
 
-def list_dates(session: Session) -> None:
+def populate_listen_dates(session: Session) -> None:
     """
     This populates the ListenDates table with a list of every day between the
     first and last date found in the StreamingHistoryRaw table.
@@ -102,57 +101,37 @@ def list_dates(session: Session) -> None:
     """
 
     # Get a list of all the dates for which there is listening history
-    result = session.scalars(select(StreamingHistory.end_time)
-                             .group_by(StreamingHistory.end_time)
-                             .order_by(StreamingHistory.end_time))
-
-    dates_incl = result.all()
-
-    print(f'Result: type {type(result)}, contents {result}')
-    print(f'dates_incl: type {type(dates_incl)}, contents {dates_incl}')
-
-    # OLD METHOD
-    # dates_incl = [ut.to_date(f[0]) for f in result.all()]
-
-    # Get the first and last date with listening history
-    first_date = dates_incl[0]
-    last_date = dates_incl[-1]
-
-    # Get a list of ListenDates objects for every date in the range [first,
-    # last] and whether there's recorded listening history on that day
-
-    # noinspection PyArgumentList
-    dates = [ListenDates(day=d, has_listen=d in dates_incl)
-             for d in ut.date_range(first_date, last_date + timedelta(days=1))]
-
-    # Add all the dates to the database
-    session.add_all(dates)
-
-
-def identify_missing_dates(session: Session) -> None:
-    """
-    This updates the Dates table to indicate whether each date is marked
-    missing, meaning it is not captured by any of the Downloads.
-
-    Args:
-        session: An SQLAlchemy session for the project.
-
-    Returns:
-        None
-    """
+    sh_date = func.date(StreamingHistory.end_time, type_=DATE)
+    result = session.scalars(select(sh_date)
+                             .group_by(sh_date)
+                             .order_by(sh_date))
+    included_dates = result.all()
 
     # Get a list of download dates for all the downloads
     result = session.scalars(select(Downloads.download_date))
     download_dates = result.all()
 
-    # Get all dates
-    result = session.scalars(select(ListenDates))
-    all_dates = result.all()
+    print(f'Result: type {type(result)}, contents {result}')
+    print(f'dates_incl: type {type(included_dates)}, '
+          f'type element 1 {type(included_dates[0])}, '
+          f'contents {included_dates[:10]}')
 
-    # Update each date according to whether it's missing. This will be
-    # reflected in the database
-    for d in all_dates:
-        d.is_missing = is_date_missing(d.day, download_dates)
+    # Get the first and last date with recorded listening history
+    first_date = included_dates[0]
+    last_date = included_dates[-1]
+
+    # Get a list of ListenDates objects for every date in the range [first,
+    # last] and their has_listen and is_missing states
+
+    # noinspection PyArgumentList
+    dates = [ListenDates(day=d,
+                         has_listen=d in included_dates,
+                         is_missing=d not in included_dates and
+                                    is_date_missing(d, download_dates))
+             for d in ut.date_range(first_date, last_date + timedelta(days=1))]
+
+    # Add all the dates to the database
+    session.add_all(dates)
 
 
 def is_date_missing(this_date: date, download_dates: List[date]) -> bool:
@@ -164,8 +143,8 @@ def is_date_missing(this_date: date, download_dates: List[date]) -> bool:
         this_date: The date to check.
         download_dates: The list of download end dates.
 
-    Returns: True if the given date is contained in the date range for one of
-             the download dates; otherwise False.
+    Returns: True if and only if the given date is NOT contained in the date
+             range for ANY of the download dates.
     """
 
     for end_date in download_dates:

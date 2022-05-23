@@ -76,8 +76,11 @@ def date_range(start_date: date, end_date: date) -> Iterable[date]:
         start_date: The first date (inclusive).
         end_date: The last date (exclusive).
 
-    Returns:
+    Yields:
         The next date in the sequence.
+
+    Returns:
+        An interator of dates.
 
     """
     for n in range(int((end_date - start_date).days)):
