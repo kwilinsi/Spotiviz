@@ -4,7 +4,7 @@ from sqlalchemy import select
 
 from spotiviz.database import db
 from spotiviz.database.structure.program_struct import Projects
-from spotiviz.projects import sql, utils as ut
+from spotiviz.projects import utils as ut
 
 
 class ProjectState(Enum):

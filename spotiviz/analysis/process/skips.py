@@ -10,11 +10,10 @@ indicate whether it is determined to be a skip.
 """
 import enum
 import sqlite3
-from typing import Optional, List
+from typing import Optional
 
 import pandas as pd
 
-from spotiviz.utils import db
 from spotiviz.utils.log import LOG
 from spotiviz.projects import utils as ut
 

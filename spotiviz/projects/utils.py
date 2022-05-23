@@ -6,7 +6,6 @@ from sqlalchemy import select
 
 from spotiviz.database import db
 from spotiviz.database.structure.program_struct import Projects
-from spotiviz.projects import sql
 
 # NOTE: This file intentionally does not have any dependencies within the
 # spotiviz.projects package (except the sql file). Therefore, it can be
