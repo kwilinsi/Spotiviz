@@ -93,7 +93,7 @@ def get_project_engine(name: str,
 
 def session(project_name: str = None) -> Session:
     """
-    Return a new Session instance created from an SQLAlchemy engine. If a
+    Return a new Session instance created from a SQLAlchemy engine. If a
     project name is specified, that project's engine is retrieved from the
     PROJECT_ENGINES dictionary. If no project name is given, then the
     GLOBAL_ENGINE is used and a session to the global program-level database

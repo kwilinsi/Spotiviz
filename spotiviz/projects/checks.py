@@ -39,9 +39,9 @@ def enforce_project_exists(project: str) -> None:
 
     state = project_state(project)
     if state == ProjectState.UNDEFINED:
-        raise ValueError("Unrecognized project name '{p}'".format(p=project))
+        raise ValueError(f'Unrecognized project name \'{project}\'')
     elif state == ProjectState.MISSING_DATABASE:
-        raise ValueError("Project '{p}' missing database".format(p=project))
+        raise ValueError(f'Project \'{project}\' missing database')
 
 
 def project_state(name: str) -> ProjectState:

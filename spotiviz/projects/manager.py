@@ -1,17 +1,14 @@
-import datetime
-from datetime import date
 import os.path
-from typing import List, Tuple, Dict
-from sqlalchemy import delete
+from typing import List, Tuple
+
+from sqlalchemy import delete, select
 
 from spotiviz import get_data
 
-from spotiviz.projects import sql, preprocess, checks, utils as ut
-from spotiviz.projects.structure import (
-    project_class as pc, spotify_download as sd
-)
+from spotiviz.projects import preprocess, checks, utils as ut
+from spotiviz.projects.structure import project_class as pc
 
-from spotiviz.database import db, setup
+from spotiviz.database import db
 from spotiviz.database.structure.program_struct import Projects
 
 from spotiviz.utils.log import LOG
@@ -228,17 +225,44 @@ def build_project(name: str, root_dir: str,
     preprocess_data(project)
 
 
-def get_all_projects() -> Dict[str, Tuple[str, datetime.datetime]]:
+def get_all_projects() -> List[pc.Projects]:
     """
     Get a list of all the projects registered in the Projects table.
 
-    This is given as a Python dictionary. Each project name is a key, and the
-    values are tuples of the database path and the creation timestamp.
-
     Returns:
-        A dictionary with each project name listed as a key.
+        A list of all the projects as SQLAlchemy-based Projects objects.
     """
 
-    with db.get_conn() as conn:
-        result = conn.execute(sql.GET_ALL_PROJECTS)
-        return {p[0]: (p[1], ut.to_datetime(p[2])) for p in result}
+    with db.session() as session:
+        return session.scalars(select(Projects)).all()
+
+
+def get_project(project_name: str) -> pc.Project:
+    """
+    Given a project's name, return its Project instance. This assumes that
+    the project has already been created and is listed in the global database
+    Projects table.
+
+    Args:
+        project_name: The name of the project.
+
+    Returns:
+        The Project instance for the desired project.
+
+    Raises:
+        ValueError: If there is no project with the given name, either
+                    because it is not listed in the Projects table or because
+                    it's missing a database file. Or because there was some
+                    error retrieving the project from the database.
+    """
+
+    checks.enforce_project_exists(project_name)
+
+    with db.session() as session:
+        try:
+            sql_project = session.scalars(
+                select(Projects).where(Projects.name == project_name)).one()
+            # Create a Project instance from the SQL data
+            return pc.Project.from_sql(sql_project)
+        except Exception:
+            raise ValueError(f'Failed to get project \'{project_name}\'')

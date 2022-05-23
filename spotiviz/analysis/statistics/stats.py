@@ -1,11 +1,14 @@
 import datetime
 from enum import Enum
 from typing import Iterable, Tuple, Dict
-import sqlite3
+
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from spotiviz.analysis.statistics import utils as ut
-from spotiviz.database import db
-from spotiviz.projects import checks, utils as proj_ut
+
+from spotiviz.projects import utils as proj_ut
+from spotiviz.projects.structure import project_class as pc
 
 
 class StatType(Enum):
@@ -114,25 +117,26 @@ class Statistic(Enum):
     )
 
 
-def get_stats(connection: sqlite3.Connection) -> Iterable[Tuple[StatType,
-                                                                object,
-                                                                StatUnit]]:
+def get_stats(session: Session) -> Iterable[Tuple[StatType, object, StatUnit]]:
     """
     Yield an iterator over each of the statistics in the Statistic enumerated
     class.
 
     Args:
-        connection: A SQLite connection to the database on which to execute
-                    each of the statistic queries.
+        session: A SQLAlchemy session connected to the SQLite database
+        for the project on which to execute each of the statistic queries.
+
+    Yields:
+        Each statistic enum, along with its value and unit.
 
     Returns:
-        The Statistic enum, along with the value and unit for each statistic.
+        An iterator over each statistic enum and its value and unit.
     """
 
     for s in Statistic:
         name, path, stat_type, unit = s.value
         with open(path) as p:
-            result = connection.execute(p.read()).fetchone()[0]
+            result = session.scalars(text(p.read())).one()
 
         if stat_type == StatType.INT:
             yield s, int(result), unit
@@ -142,13 +146,13 @@ def get_stats(connection: sqlite3.Connection) -> Iterable[Tuple[StatType,
             yield s, proj_ut.to_date(result), unit
 
 
-def get_stats_dict(project: str) -> Dict:
+def get_stats_dict(project: pc.Project) -> Dict:
     """
     Calculate a series of summary statistics for a given project, and return
     it as a dictionary.
 
     Args:
-        project: The project to calculate statistics for.
+        project: The project on which to calculate statistics.
 
     Returns:
         A dictionary of paired statistics, with StatType enums as keys,
@@ -159,27 +163,24 @@ def get_stats_dict(project: str) -> Dict:
                     doesn't exist.
     """
 
-    # Ensure the project exists first
-    checks.enforce_project_exists(project)
-
     # Create the statistics dictionary
     s = dict()
 
-    with db.get_conn(proj_ut.get_database_path(project)) as conn:
-        for stat_type, value, unit in get_stats(conn):
+    with project.open_session() as session:
+        for stat_type, value, unit in get_stats(session):
             s[stat_type] = (value, unit)
 
     return s
 
 
-def print_stats(project: str, stats_dict: Dict) -> None:
+def print_stats(project_name: str, stats_dict: Dict) -> None:
     """
     Print the summary statistics from a project to the console. This is mostly
     used for testing and debugging purposes.
 
     Args:
-        project: The name of the project (only used for displaying in the
-                 console).
+        project_name: The name of the project (only used for displaying in the
+                      console).
         stats_dict: A dictionary of summary statistics, such as that generated
                     by get_stats_dict().
 
@@ -188,7 +189,7 @@ def print_stats(project: str, stats_dict: Dict) -> None:
     """
 
     print('Summary Statistics')
-    print('Project:', project)
+    print('Project:', project_name)
     print()
 
     for s in stats_dict:
@@ -198,4 +199,4 @@ def print_stats(project: str, stats_dict: Dict) -> None:
         else:
             v = str(value)
 
-        print('{stat}: {val} {u}'.format(stat=s.value[0], val=v, u=unit.value))
+        print(f'{s.value[0]}: {v} {unit.value}')
