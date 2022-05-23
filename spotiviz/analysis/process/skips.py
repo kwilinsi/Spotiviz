@@ -10,12 +10,10 @@ indicate whether it is determined to be a skip.
 """
 import enum
 from typing import Optional, List
-import pandas as pd
 from sqlalchemy import select
 from itertools import groupby
 
 from spotiviz.utils.log import LOG
-from spotiviz.projects import utils as ut
 from spotiviz.projects.structure import project_class as pc
 
 from spotiviz.database.structure.project_struct import TrackLengths
@@ -210,27 +208,3 @@ def check_duration(duration: int,
         return SkipState.NON_SKIP
 
     return current_state
-
-
-def save_skip_datum(track_id: int,
-                    ms_played: int,
-                    skip: SkipState,
-                    conn) -> None:
-    """
-    Save skip data for a single row to the TrackLengths table.
-
-    Args:
-        track_id: The track id, for identifying the row in the table.
-        ms_played: The duration, for identifying the row in the table.
-        skip: the SkipState, whose value is stored in the table.
-        conn: A connection to the project database.
-
-    Returns:
-        None
-    """
-
-    conn.execute('UPDATE TrackLengths '
-                 'SET skip = ? '
-                 'WHERE track_id = ? '
-                 'AND ms_played = ?;',
-                 (skip.value, track_id, ms_played))
