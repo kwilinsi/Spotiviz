@@ -4,9 +4,12 @@ engine and structure file.
 """
 
 import sqlalchemy as sa
+from sqlalchemy import text
 
-from spotiviz.database import db
+from spotiviz.database import db, sql
 from spotiviz.database.structure import program_struct, project_struct
+
+from spotiviz.utils import resources
 
 
 def setup_program_db() -> None:
@@ -34,4 +37,11 @@ def setup_project_db(project_engine: sa.engine.base.Engine) -> None:
         None
     """
 
+    # Set up the main tables
     project_struct.Base.metadata.create_all(project_engine)
+
+    # Set up the StreamingHistoryFull view
+    with project_engine.connect() as conn:
+        with open(resources.get_sql_resource(
+                sql.VIEW_STREAMING_HISTORY_FULL)) as file:
+            conn.execute(text(file.read()))
