@@ -16,9 +16,6 @@ from spotiviz.projects import sql
 # This format is used for storing dates in the SQLite database
 __DATE_FORMAT = '%Y-%m-%d'
 
-# This format is used for storing complete timestamps
-__DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
-
 
 def clean_project_name(name: str) -> str:
     """
@@ -61,7 +58,7 @@ def get_database_path(project: str) -> str:
         ValueError: If the given project does not exist.
     """
 
-    with db.program_session() as session:
+    with db.session() as session:
         try:
             r = session.scalars(
                 select(Projects.database_path).where(Projects.name == project))
@@ -87,7 +84,7 @@ def date_range(start_date: date, end_date: date) -> Iterable[date]:
         yield start_date + timedelta(n)
 
 
-def to_date(date_str: str) -> Optional[datetime]:
+def to_date(date_str: str) -> Optional[date]:
     """
     Convert the given date string to a proper datetime.date instance using the
     format "%Y-%m-%d".
@@ -107,10 +104,10 @@ def to_date(date_str: str) -> Optional[datetime]:
         return None
 
     try:
-        return datetime.strptime(date_str, __DATE_FORMAT)
+        return datetime.strptime(date_str, __DATE_FORMAT).date()
     except Exception:
-        raise ValueError("Invalid date_str '" + date_str +
-                         "' cannot be parsed to a date object.")
+        raise ValueError(f'Invalid date_str "{date_str}" cannot be parsed '
+                         f'to a date object.')
 
 
 def to_datetime(time_str: str) -> Optional[datetime]:
@@ -118,6 +115,10 @@ def to_datetime(time_str: str) -> Optional[datetime]:
     Analogous to utils.to_date() but operating on full timestamps rather than
     simply dates, this function accepts a timestamp as a string and returns
     it as a proper datetime object.
+
+    This works for timestamps with and without seconds. The format without
+    seconds is used first, and if that failed, it is repeated with a seconds
+    parameter. If both attempts fail, a ValueError is raised.
 
     Args:
         time_str: The string to convert to a datetime object.
@@ -134,10 +135,13 @@ def to_datetime(time_str: str) -> Optional[datetime]:
         return None
 
     try:
-        return datetime.strptime(time_str, __DATETIME_FORMAT)
-    except Exception:
-        raise ValueError("Invalid time_str '" + time_str +
-                         "' cannot be parsed to a datetime object.")
+        return datetime.strptime(time_str, '%Y-%m-%d %H:%M')
+    except (ValueError, TypeError):
+        try:
+            return datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
+        except (ValueError, TypeError):
+            raise ValueError(f'Invalid time_str {time_str} '
+                             f' cannot be coerced into a datetime object.')
 
 
 def date_to_str(date_obj: date) -> str:
@@ -163,5 +167,5 @@ def date_to_str(date_obj: date) -> str:
     try:
         return date_obj.strftime(__DATE_FORMAT)
     except Exception:
-        raise ValueError("Invalid date object '" + str(date_obj) +
-                         "' cannot be formatted as a date string.")
+        raise ValueError(f'Invalid date object {date_obj} cannot be formatted '
+                         f'as a date string.')

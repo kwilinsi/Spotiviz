@@ -14,9 +14,9 @@ Base = declarative_base()
 
 class Projects(Base, ReprModel):
     __tablename__ = "Projects"
-    name = Column(Text, primary_key=True)
-    database_path = Column(Text, nullable=False)
-    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    name: Column = Column(Text, primary_key=True)
+    database_path: Column = Column(Text, nullable=False)
+    created_at: Column = Column(DateTime, nullable=False, server_default=func.now())
 
     def __repr__(self) -> str:
         return self._repr(name=self.name,

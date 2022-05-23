@@ -10,6 +10,9 @@ def install_spotiviz():
     """
     Install the Spotiviz application. This primarily entails the creation of
     a database for storing projects.
+
+    If there is already a program database file, it is deleted, and a new one
+    is created.
     """
 
     LOG.debug('Starting Spotiviz installation')

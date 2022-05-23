@@ -65,7 +65,7 @@ def project_state(name: str) -> ProjectState:
 
     # Check whether there's a project entry with this name (not cleaned) in the
     # Projects table
-    with db.program_session() as session:
+    with db.session() as session:
         result = session.scalars(
             select(Projects.name).where(Projects.name == name))
 
