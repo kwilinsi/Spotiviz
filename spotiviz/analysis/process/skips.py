@@ -13,36 +13,11 @@ from typing import Optional, List
 from sqlalchemy import select
 from itertools import groupby
 
-from spotiviz.utils.log import LOG
-from spotiviz.projects.structure import project_class as pc
-
 from spotiviz.database.structure.project_struct import TrackLengths
 
-# The minimum duration a track must play for in order for it not to be counted
-# a skip (assuming no duration has a frequency of 2 or more). This is given
-# in milliseconds.
-MIN_TRACK_LENGTH = 10000
-
-# If a duration has a frequency of at least MIN_FREQUENCY and makes up at least
-# FREQUENCY_PERCENT_THRESHOLD percent of the listens for that track, it is
-# marked a NON_SKIP.
-MIN_FREQUENCY = 2
-
-# See MIN_FREQUENCY
-FREQUENCY_PERCENT_THRESHOLD = 0.1
-
-# If a duration has a frequency of at least ABSOLUTE_NON_SKIP_FREQUENCY,
-# it will always be marked NON_SKIP, regardless of what percentage of the
-# total listens that this duration comprises.
-ABSOLUTE_NON_SKIP_FREQUENCY = 6
-
-# As long as a duration is within this percent less than another NON_SKIP
-# duration, this one will also be marked NON_SKIP.
-#
-# For example, if one
-# duration is 100 seconds, and it's marked NON_SKIP, then any duration of at
-# least 98 seconds will also be marked NON_SKIP (at a 2% error margin).
-SKIP_ERROR_MARGIN = 0.02
+from spotiviz.utils.log import LOG
+from spotiviz.projects.structure import project_class as pc
+from spotiviz.projects.structure.config.properties import Config as C
 
 
 class SkipState(enum.Enum):
@@ -84,7 +59,7 @@ def determine_skips(project: pc.Project) -> None:
 
         # Each track group is a collection of durations
         for track in tracks:
-            _determine_skips_for_track(track)
+            _determine_skips_for_track(track, project)
 
         # Save to database
         LOG.debug('Saving to database...')
@@ -92,8 +67,8 @@ def determine_skips(project: pc.Project) -> None:
         session.commit()
 
 
-def _determine_skips_for_track(
-        durations: List[TrackLengths]) -> List[TrackLengths]:
+def _determine_skips_for_track(durations: List[TrackLengths],
+                               project: pc.Project) -> List[TrackLengths]:
     """
     Go through each of the distinct durations for a specific track, marking
     each one as a SKIP or NON_SKIP.
@@ -103,6 +78,8 @@ def _determine_skips_for_track(
                    durations that a certain track was played for. This must
                    always contain at least one element, and all elements must
                    have the same track_id.
+        project: The project being processed (this is used for retrieving
+                 config properties).
 
     Returns:
         The modified list, with the skip data members modified for each
@@ -112,7 +89,7 @@ def _determine_skips_for_track(
     any_non_skips = False
 
     for d in durations:
-        d.skip = check_frequency(d.frequency, d.percent_listens)
+        d.skip = check_frequency(d.frequency, d.percent_listens, project)
         if d.skip:
             any_non_skips = True
 
@@ -120,7 +97,7 @@ def _determine_skips_for_track(
     # least the MIN_TRACK_LENGTH as a NON_SKIP, and leave the others to be
     # marked SKIP. It's assumed that the longest duration is the first one.
     if not any_non_skips:
-        if durations[0].ms_played >= MIN_TRACK_LENGTH:
+        if durations[0].ms_played >= project.c(C.MIN_NON_SKIP_TRACK_LENGTH):
             durations[0].skip = SkipState.NON_SKIP
 
     # Determine the shortest duration (ms_played) that was marked NON_SKIP
@@ -131,7 +108,10 @@ def _determine_skips_for_track(
     # Any durations either longer than the shortest_non_skip duration or
     # within a certain percentage of it are marked NON_SKIP as well
     for d in durations:
-        d.skip = check_duration(d.ms_played, shortest_non_skip, d.skip)
+        d.skip = check_duration(d.ms_played,
+                                shortest_non_skip,
+                                d.skip,
+                                project)
 
     # Lastly, any unset values become SKIP
     for d in durations:
@@ -146,7 +126,8 @@ def _determine_skips_for_track(
 
 
 def check_frequency(frequency: int,
-                    percent_listens: float) -> Optional[SkipState]:
+                    percent_listens: float,
+                    project: pc.Project) -> Optional[SkipState]:
     """
     Determine if a certain duration is a NON_SKIP based on its frequency and
     percent_listens. If the frequency is at least MIN_FREQUENCY and the
@@ -158,15 +139,27 @@ def check_frequency(frequency: int,
     Args:
         frequency: The frequency for a certain duration of a certain track.
         percent_listens: This frequency / the total frequency for the track.
+        project: The project being processed (used for retrieving config
+                 properties).
 
     Returns:
         SkipState.NON_SKIP if the condition for NON_SKIP is met. Otherwise,
         just None, to indicate that the state is unknown.
     """
 
-    if frequency >= ABSOLUTE_NON_SKIP_FREQUENCY or \
-            (frequency >= MIN_FREQUENCY and
-             percent_listens >= FREQUENCY_PERCENT_THRESHOLD):
+    # This conditional is split into distinct booleans for easier reading.
+    # Either the at_absolute condition must be met, OR both the at_min and
+    # at_percent conditions must be met for a certain duration to not be
+    # marked a skip.
+
+    at_absolute: bool = frequency >= project.c(
+        C.ABSOLUTE_NON_SKIP_FREQUENCY_THRESHOLD)
+    at_min: bool = frequency >= project.c(
+        C.MIN_NON_SKIP_FREQUENCY_THRESHOLD)
+    at_percent: bool = percent_listens >= project.c(
+        C.MIN_NON_SKIP_FREQUENCY_PERCENT_THRESHOLD)
+
+    if at_absolute or (at_min and at_percent):
         return SkipState.NON_SKIP
     else:
         return None
@@ -174,7 +167,8 @@ def check_frequency(frequency: int,
 
 def check_duration(duration: int,
                    shortest_non_skip: Optional[int],
-                   current_state: Optional[SkipState]) -> Optional[SkipState]:
+                   current_state: Optional[SkipState],
+                   project: pc.Project) -> Optional[SkipState]:
     """
     Determine if a certain duration is a NON_SKIP based on its duration
     relative to the other recorded durations of the same track.
@@ -195,6 +189,8 @@ def check_duration(duration: int,
         current_state: The current skip state of this duration instance (
                        SKIP, NON_SKIP, or None). If it's already NON_SKIP,
                        NON_SKIP is immediately returned.
+        project: The project being processed (used for retrieving config
+                 properties).
 
     Returns:
         The new skip state for this track duration entry.
@@ -203,8 +199,8 @@ def check_duration(duration: int,
     if current_state == SkipState.NON_SKIP:
         return SkipState.NON_SKIP
 
-    if shortest_non_skip and \
-            duration >= (1 - SKIP_ERROR_MARGIN) * shortest_non_skip:
+    if shortest_non_skip and duration >= shortest_non_skip * (
+            1 - project.c(C.SKIP_DURATION_ERROR_MARGIN)):
         return SkipState.NON_SKIP
 
     return current_state

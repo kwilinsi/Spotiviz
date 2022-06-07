@@ -1,4 +1,5 @@
 import enum
+from typing import Any
 
 
 class _Property:
@@ -12,24 +13,6 @@ class _Property:
         self.description = description
         self.default = default
 
-    def to_str(self, value=None):
-        """
-        Convert some value for this property to a string. For example,
-        5 would be converted to '5'. If no value is provided, the default
-        value is converted instead.
-
-        Args:
-            value: [Optional] the value to convert.
-
-        Returns:
-            The string representation of the given (or default) value.
-        """
-
-        if value:
-            return str(value)
-        else:
-            return str(self.default)
-
 
 class Config(enum.Enum):
     """
@@ -37,6 +20,20 @@ class Config(enum.Enum):
     project. Each of these is listed in the project's Config table in the
     SQLite database file.
     """
+
+    def cast(self, val: str) -> Any:
+        """
+        Cast some value from a string (as it is stored in the SQLite
+        database) into the appropriate data type for the property.
+
+        Args:
+            val: The value to cast.
+
+        Returns:
+            The value cast to the appropriated data type.
+        """
+
+        return self.value.data_type(val)
 
     MIN_NON_SKIP_TRACK_LENGTH = _Property(
         'Minimum non-skip track length',
@@ -47,18 +44,43 @@ class Config(enum.Enum):
         10000
     )
 
+    MIN_NON_SKIP_FREQUENCY_THRESHOLD = _Property(
+        'Minimum non-skip frequency threshold',
+        'If a track is played for a certain number of milliseconds at least '
+        'this many times, and if that duration comprises at least the '
+        'MIN_NON_SKIP_FREQUENCY_PERCENT_THRESHOLD, that duration will not be '
+        'considered a skip.\n\n'
+        'For example, consider song A, which was played 5 times for exactly 1 '
+        'minute. If this setting were 5, song A at 1 minute would meet the '
+        'threshold. But if song A were only played for 1 minute 4 times, '
+        'it wouldn\'t meet the threshold.\n\n'
+        'Typically, this value is 2, because it\'s unlikely that a song will '
+        'be skipped at exactly the same millisecond duration twice in a row.',
+        int,
+        2
+    )
+
     MIN_NON_SKIP_FREQUENCY_PERCENT_THRESHOLD = _Property(
         'Non-skip frequency percent threshold',
-        'See MIN_NON_SKIP_TRACK_LENGTH.',
+        'See MIN_NON_SKIP_FREQUENCY_THRESHOLD. That determines the minimum '
+        'number of times a song must be played at a certain duration. This '
+        'is an additional requirement for what percentage of the total '
+        'listens those must comprise.\n\n'
+        'If a song is played 1000 times, it\'s likely that it will be skipped '
+        'twice (or even more) at exactly the same millisecond mark. This '
+        'requires a certain percentage of all the listens to that song to be '
+        'at that exactly millisecond mark, in order for it to not be '
+        'considered a skip.',
         float,
         0.1
     )
 
     ABSOLUTE_NON_SKIP_FREQUENCY_THRESHOLD = _Property(
-        'Absolute non-skip frequency',
-        'If any song was played for a certain duration at least this number '
-        'of times, it will never be counted as a skip. It\'s simply highly '
-        'unlikely for that to happen.',
+        'Absolute non-skip frequency threshold',
+        'If a song is played at a certain duration this many times, it will '
+        'never be considered a skip. If this threshold is met, then the '
+        'MIN_NON_SKIP_FREQUENCY_PERCENT_THRESHOLD does NOT need to be met for '
+        'the song to be marked non-skip.',
         float,
         6
     )

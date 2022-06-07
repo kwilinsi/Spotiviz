@@ -4,6 +4,8 @@ from typing import Any, Dict
 
 from sqlalchemy import select
 
+from spotiviz.utils.log import LOG
+
 from spotiviz.database.structure.project_struct import Config as ConfigTbl
 from spotiviz.projects.structure.config.properties import (
     Config, config_from_name
@@ -32,8 +34,6 @@ class ProjectConfig:
 
         # Initialize the properties dictionary
         self.properties: Dict[Config, Any] = dict()
-        for p in Config:
-            self.properties[p] = p.value.to_str()
 
     def read_from_db(self) -> None:
         """
@@ -48,14 +48,16 @@ class ProjectConfig:
             None
         """
 
-        # TODO implement global config defaults
+        LOG.debug(f'Loading configuration for project {self.project} '
+                  f'from database')
 
         with self.project.open_session() as session:
             stmt = select(ConfigTbl)
             result = session.execute(stmt)
 
             for row in result:
-                self.properties[config_from_name(row[0])] = row[1]
+                c = config_from_name(row[0].key)
+                self.properties[c] = c.cast(row[0].value)
 
     def get(self, config: Config) -> Any:
         """
@@ -100,7 +102,7 @@ class ProjectConfig:
 
             try:
                 val = result.first()
-                self.properties[config] = val
+                self.properties[config] = config.cast(val)
                 return val
             except Exception:
                 raise ValueError(f'Failed to find config \"{config.name}\"')

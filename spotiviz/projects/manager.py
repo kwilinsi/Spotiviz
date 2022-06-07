@@ -114,7 +114,11 @@ def create_project(name: str, database_path: str = None) -> pc.Project:
     # and a database file for it.
     project.create_database()
     project.save_to_database()
+
     LOG.info(f'Created a new project: {project}')
+
+    # Load the configuration for the project from the SQLite database
+    project.config.read_from_db()
 
     return project
 
@@ -243,6 +247,9 @@ def get_project(project_name: str) -> pc.Project:
     the project has already been created and is listed in the global database
     Projects table.
 
+    This also initializes the project's SQLAlchemy database engine and loads
+    the project's configuration from the database.
+
     Args:
         project_name: The name of the project.
 
@@ -262,7 +269,14 @@ def get_project(project_name: str) -> pc.Project:
         try:
             sql_project = session.scalars(
                 select(Projects).where(Projects.name == project_name)).one()
+
             # Create a Project instance from the SQL data
-            return pc.Project.from_sql(sql_project)
+            p = pc.Project.from_sql(sql_project)
+
+            # Initialize SQLAlchemy engine and load config
+            p.initialize_engine()
+            p.config.read_from_db()
+
+            return p
         except Exception:
             raise ValueError(f'Failed to get project \'{project_name}\'')
