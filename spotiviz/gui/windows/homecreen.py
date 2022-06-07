@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
 
 from spotiviz.gui.windows.new_project import NewProject
 from spotiviz.gui.widgets.header import Header
-from spotiviz.gui.widgets.main_button import MainButton
+from spotiviz.gui.widgets.generic_buttons import MainBtn
 from spotiviz.gui.widgets import db_widgets
 
 
@@ -24,11 +24,11 @@ class HomeScreen(QMainWindow):
         project_list_layout = QVBoxLayout()
 
         # Define main project buttons
-        btn_new = MainButton("New Project")
+        btn_new = MainBtn("New Project")
         btn_new.clicked.connect(self.new_project)
         main_buttons_layout.addWidget(btn_new)
 
-        btn_open = MainButton("Open Project")
+        btn_open = MainBtn("Open Project")
         main_buttons_layout.addWidget(btn_open)
 
         # Create list of recent projects

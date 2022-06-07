@@ -29,14 +29,28 @@ Header {
     color: #333333;
 }
 
-MainButton {
-    font-size: 16px;
-    font-weight: bold;
+PrimaryBtn {
+    font-size: 14px;
     color: #ffffff;
     background-color: #2e67c9;
     border: 0px;
 }
 
-MainButton:hover:!pressed {
+PrimaryBtn:hover:!pressed {
     background-color: #518cf0;
+}
+
+SecondaryBtn {
+    background-color: #ced2d9;
+    color: #000000;
+}
+
+SecondaryBtn:hover:!pressed {
+    background-color: #dfe3eb;
+}
+
+MainBtn {
+    font-size: 16px;
+    font-weight: bold;
+    background-color: #2e67c9;
 }

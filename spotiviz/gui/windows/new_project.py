@@ -7,8 +7,9 @@ from PyQt6.QtWidgets import (
     QFileDialog, QPushButton
 )
 
-from spotiviz.projects import utils
-from spotiviz.projects import manager
+from spotiviz.projects import utils, manager
+
+from spotiviz.gui.widgets.generic_buttons import PrimaryBtn, SecondaryBtn
 
 
 class NewProject(QMainWindow):
@@ -23,6 +24,7 @@ class NewProject(QMainWindow):
         page_layout = QVBoxLayout()
         field_name_layout = QHBoxLayout()
         field_path_layout = QHBoxLayout()
+        buttons_layout = QHBoxLayout()
 
         # Populate layouts
 
@@ -31,6 +33,7 @@ class NewProject(QMainWindow):
 
         page_layout.addLayout(field_name_layout)
         page_layout.addLayout(field_path_layout)
+        page_layout.addLayout(buttons_layout)
 
         prompt_name = QLabel('Name:')
         self.field_name = QLineEdit(f'MyProject{random.randint(10000, 99999)}')
@@ -47,6 +50,13 @@ class NewProject(QMainWindow):
         field_path_layout.addWidget(self.field_path)
         field_path_layout.addWidget(path_browse_btn)
 
+        btn_cancel = SecondaryBtn('Cancel')
+        btn_cancel.clicked.connect(self.close)
+        btn_create = PrimaryBtn('Create')
+        btn_create.clicked.connect(self.create_project)
+        buttons_layout.addWidget(btn_cancel)
+        buttons_layout.addWidget(btn_create)
+
         # Assign everything to the main window
         w = QWidget()
         w.setLayout(page_layout)
@@ -61,18 +71,12 @@ class NewProject(QMainWindow):
             None
         """
 
-        p = Path(self.field_path.text()).parent.absolute()
-        print(p)
-        print(os.path.abspath(p))
-
         path, _ = QFileDialog.getSaveFileName(
             self,
             f'Select Path for {self.name()}',
             utils.clean_project_name(self.name()),
             'Database file (*.db)'
         )
-
-        print(f'path: {path}')
 
         if path:
             self.field_path.setText(path)
@@ -93,12 +97,10 @@ class NewProject(QMainWindow):
             return
 
         # Get current directory
-        d = Path(self.field_path.text()).parent.absolute()
+        d = Path(self.path()).parent.absolute()
 
         self.field_path.setText(
             os.path.join(d, utils.clean_project_name(self.name())))
-
-
 
     def name(self) -> str:
         """
@@ -109,3 +111,24 @@ class NewProject(QMainWindow):
         """
 
         return self.field_name.text()
+
+    def path(self) -> str:
+        """
+        Retrieve the currently selected path to the database.
+
+        Returns:
+            The path
+        """
+
+        return self.field_path.text()
+
+    def create_project(self) -> None:
+        """
+        Call this when the 'Create' button is clicked to create a new project.
+
+        Returns:
+            None
+        """
+
+        manager.create_project(self.name(), self.path())
+        self.close()
