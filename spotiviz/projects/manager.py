@@ -83,7 +83,7 @@ def create_project(name: str, database_path: str = None) -> pc.Project:
                          f'project \'{name}\'')
 
     # Determine where the project's SQLite database file will be stored
-    path = __determine_project_path(project_name=name, path=database_path)
+    path = determine_new_project_path(project_name=name, path=database_path)
 
     # Instantiate a new project instance
     project = pc.Project(name, path)
@@ -123,7 +123,7 @@ def create_project(name: str, database_path: str = None) -> pc.Project:
     return project
 
 
-def __determine_project_path(project_name: str, path: str = None) -> str:
+def determine_new_project_path(project_name: str, path: str = None) -> str:
     """
     Determine where a new project's database is to be stored based on the
     given project name and path.

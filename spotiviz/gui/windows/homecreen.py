@@ -15,6 +15,7 @@ class HomeScreen(QMainWindow):
         super().__init__()
 
         self.POPUP = None
+        self.POPUP = NewProject()
         self.setWindowTitle("Spotiviz - Home")
 
         # Create layouts
