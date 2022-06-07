@@ -1,43 +1,51 @@
-import tkinter as tk
-import tkinter.messagebox
-from tkinter import filedialog as fd
+import os.path
 
-root = tk.Tk()
+from PyQt6.QtGui import QFontDatabase
+from PyQt6.QtWidgets import QApplication
 
+from spotiviz.gui import homecreen, constants as const
+from spotiviz.utils import resources as resc
 
-def startGui():
-    __showHomeScreen()
-
-    root.title('Spotiviz')
-    root.geometry('{width}x{height}'.format(
-        width=800,
-        height=600
-    ))
-
-    root.mainloop()
+APP = None
+HOME = None
 
 
-def __showHomeScreen():
-    frame = tk.Frame(root)
+def start() -> None:
+    """
+    Start the main GUI, initializing the Qt application and displaying the
+    home screen.
 
-    title = tk.Label(frame, text='Spotiviz', font=('Times New Roman', 36))
-    title.grid(row=0, column=0, pady=10)
+    Returns:
+        None
+    """
 
-    selector = tk.Button(frame, text='Import Data', command=__selectFiles)
-    selector.grid(row=1, column=0, pady=10)
+    global APP, HOME
 
-    exitButton = tk.Button(frame, text='Exit', command=root.destroy)
-    exitButton.grid(row=2, column=0, pady=10)
+    APP = QApplication([])
 
-    frame.pack()
+    # Load the fonts
+    load_fonts()
+
+    # Load the QSS style sheet
+    APP.setStyleSheet(resc.read(resc.get_gui_resource(const.QSS_GLOBAL_STYLES)))
+
+    HOME = homecreen.HomeScreen()
+    HOME.show()
+
+    APP.exec()
 
 
-def __selectFiles():
-    filename = fd.askopenfilename(
-        title='Select Spotify Data'
-    )
+def load_fonts() -> None:
+    """
+    Load all the fonts in the resources folder into Qt so that they can be
+    used in the stylesheets.
 
-    tkinter.messagebox.showinfo(
-        title='Selected Files',
-        message=filename
-    )
+    Returns:
+        None
+    """
+
+    fonts_dir = resc.get_gui_resource(os.path.join('fonts'))
+
+    for root, _, files in os.walk(fonts_dir):
+        for f in files:
+            QFontDatabase.addApplicationFont(os.path.join(root, f))

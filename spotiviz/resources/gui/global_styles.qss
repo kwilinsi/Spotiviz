@@ -1,0 +1,42 @@
+/*
+ * This script is used to control the appearance of the GUI windows created
+ * through Qt.
+ */
+
+*[invalidPath="true"] {
+    color: #8c4845;
+}
+
+*[invalidPath="false"] {
+    color: #555555;
+}
+
+*[noProjects="true"] {
+    color: #8C99a3;
+    font-size: 16px;
+    font-style: italic;
+}
+
+QLabel {
+    font-family: "Lato";
+    font-size: 14px;
+}
+
+Header {
+    font-size: 24px;
+    font-family: "Lato";
+    font-weight: bold;
+    color: #333333;
+}
+
+MainButton {
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffffff;
+    background-color: #2e67c9;
+    border: 0px;
+}
+
+MainButton:hover:!pressed {
+    background-color: #518cf0;
+}
