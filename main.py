@@ -2,10 +2,9 @@ from spotiviz.gui import gui
 
 
 def main():
-    gui.startGui()
+    # Start the GUI
+    gui.start()
 
 
-
-
-# Start the program
-main()
+if __name__ == '__main__':
+    main()
