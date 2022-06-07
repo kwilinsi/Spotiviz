@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import Dict, Tuple
 
-from spotiviz.projects import utils as ut
-from spotiviz.gui.database import sql
-from spotiviz.utils import db
+from sqlalchemy import select
+
+from spotiviz.database import db
+from spotiviz.database.structure.program_struct import Projects
 
 
 def get_recent_projects(n: int = -1) -> Dict[str, Tuple[str, datetime]]:
@@ -22,6 +23,12 @@ def get_recent_projects(n: int = -1) -> Dict[str, Tuple[str, datetime]]:
         A dictionary with each project name listed as a key.
     """
 
-    with db.get_conn() as conn:
-        result = conn.execute(sql.GET_RECENT_PROJECTS, (n,))
-        return {p[0]: (p[1], ut.to_datetime(p[2])) for p in result}
+    with db.session() as session:
+        stmt = select(Projects).order_by(Projects.created_at.desc())
+        if n > 0:
+            stmt = stmt.limit(n)
+
+        result = session.execute(stmt)
+
+        return {r[0].name: (r[0].database_path, r[0].created_at)
+                for r in result}

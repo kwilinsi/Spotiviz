@@ -3,6 +3,8 @@ import os.path
 from PyQt6.QtGui import QFontDatabase
 from PyQt6.QtWidgets import QApplication
 
+from spotiviz.database import db
+
 from spotiviz.gui import homecreen, constants as const
 from spotiviz.utils import resources as resc
 
@@ -15,11 +17,15 @@ def start() -> None:
     Start the main GUI, initializing the Qt application and displaying the
     home screen.
 
+    This also initializes the global SQLAlchemy database engine.
+
     Returns:
         None
     """
 
     global APP, HOME
+
+    db.initialize()
 
     APP = QApplication([])
 
