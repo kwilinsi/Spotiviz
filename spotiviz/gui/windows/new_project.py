@@ -27,9 +27,13 @@ class NewProject(CenteredWindow):
         field_path_layout = QHBoxLayout()
         buttons_layout = QHBoxLayout()
 
+        self.layout.setContentsMargins(50, 50, 50, 50)
+        self.layout.setSpacing(20)
+
         # Populate layouts
 
         title = Header('Create New Project')
+        title.setContentsMargins(0, 0, 0, 10)
         self.layout.addWidget(title)
 
         self.layout.addLayout(field_name_layout)
@@ -60,7 +64,7 @@ class NewProject(CenteredWindow):
 
         # Set fixed and initial sizes
         self.set_fixed_size()
-        self.resize(600, 400)
+        self.resize(700, 400)
 
     def open_file_browser(self) -> None:
         """
