@@ -9,31 +9,32 @@ from PyQt6.QtWidgets import (
 
 from spotiviz.projects import utils, manager
 
+from spotiviz.gui.windows.centered_window import CenteredWindow
+from spotiviz.gui.widgets.header import Header
 from spotiviz.gui.widgets.generic_buttons import PrimaryBtn, SecondaryBtn
 
 
-class NewProject(QMainWindow):
+class NewProject(CenteredWindow):
     def __init__(self):
-        super().__init__()
+        super().__init__(QVBoxLayout())
 
         self.setWindowTitle('Spotiviz - New Project')
 
         self.set_manual_path: bool = False
 
         # Create layouts
-        page_layout = QVBoxLayout()
         field_name_layout = QHBoxLayout()
         field_path_layout = QHBoxLayout()
         buttons_layout = QHBoxLayout()
 
         # Populate layouts
 
-        title = QLabel('Create New Project')
-        page_layout.addWidget(title)
+        title = Header('Create New Project')
+        self.layout.addWidget(title)
 
-        page_layout.addLayout(field_name_layout)
-        page_layout.addLayout(field_path_layout)
-        page_layout.addLayout(buttons_layout)
+        self.layout.addLayout(field_name_layout)
+        self.layout.addLayout(field_path_layout)
+        self.layout.addLayout(buttons_layout)
 
         prompt_name = QLabel('Name:')
         self.field_name = QLineEdit(f'MyProject{random.randint(10000, 99999)}')
@@ -57,10 +58,8 @@ class NewProject(QMainWindow):
         buttons_layout.addWidget(btn_cancel)
         buttons_layout.addWidget(btn_create)
 
-        # Assign everything to the main window
-        w = QWidget()
-        w.setLayout(page_layout)
-        self.setCentralWidget(w)
+        # Set fixed and initial sizes
+        self.set_fixed_size()
         self.resize(600, 400)
 
     def open_file_browser(self) -> None:

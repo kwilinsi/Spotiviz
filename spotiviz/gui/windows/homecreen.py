@@ -4,22 +4,22 @@ from PyQt6.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QWidget
 )
 
+from spotiviz.gui.windows.centered_window import CenteredWindow
 from spotiviz.gui.windows.new_project import NewProject
 from spotiviz.gui.widgets.header import Header
 from spotiviz.gui.widgets.generic_buttons import MainBtn
 from spotiviz.gui.widgets import db_widgets
 
 
-class HomeScreen(QMainWindow):
+class HomeScreen(CenteredWindow):
     def __init__(self):
-        super().__init__()
+        super().__init__(QVBoxLayout())
 
         self.POPUP = None
         self.POPUP = NewProject()
         self.setWindowTitle("Spotiviz - Home")
 
         # Create layouts
-        page_layout = QVBoxLayout()
         main_buttons_layout = QHBoxLayout()
         project_list_layout = QVBoxLayout()
 
@@ -46,31 +46,17 @@ class HomeScreen(QMainWindow):
             project_list_layout.addWidget(no_projects)
 
         # Set padding and alignment
-        page_layout.setContentsMargins(150, 50, 150, 50)
-        page_layout.setSpacing(20)
+        self.layout.setContentsMargins(150, 50, 150, 50)
+        self.layout.setSpacing(20)
         main_buttons_layout.setContentsMargins(0, 0, 0, 30)
         project_list_layout.setAlignment(Qt.AlignmentFlag.AlignTop |
                                          Qt.AlignmentFlag.AlignHCenter)
 
         # Combine layouts
-        page_layout.addLayout(main_buttons_layout)
-        page_layout.addLayout(project_list_layout)
+        self.layout.addLayout(main_buttons_layout)
+        self.layout.addLayout(project_list_layout)
 
-        # Put everything in a frame to restrict its height
-        frame = QFrame()
-        frame.setLayout(page_layout)
-        frame.setMaximumHeight(page_layout.sizeHint().height())
-
-        # Put that frame in a layout
-        layout = QVBoxLayout()
-        layout.addWidget(frame)
-        layout.setAlignment(Qt.AlignmentFlag.AlignHCenter |
-                            Qt.AlignmentFlag.AlignVCenter)
-
-        w = QWidget()
-        w.setLayout(layout)
-        self.setCentralWidget(w)
-
+        self.set_fixed_size()
         self.resize(800, 500)
 
     def new_project(self, s) -> None:
@@ -82,9 +68,5 @@ class HomeScreen(QMainWindow):
             None
         """
 
-        print('Clicked!')
-
         self.POPUP = NewProject()
         self.POPUP.show()
-
-        print('Shown')
