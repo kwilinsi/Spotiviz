@@ -53,11 +53,11 @@ class ProjectConfig:
 
         with self.project.open_session() as session:
             stmt = select(ConfigTbl)
-            result = session.execute(stmt)
+            result = session.scalars(stmt)
 
             for row in result:
-                c = config_from_name(row[0].key)
-                self.properties[c] = c.cast(row[0].value)
+                c = config_from_name(row.key)
+                self.properties[c] = c.cast(row.value)
 
     def get(self, config: Config) -> Any:
         """

@@ -18,7 +18,6 @@ def get_recent_projects(n: int = -1) -> Dict[str, Tuple[str, datetime]]:
         n: The number of projects to retrieve. If omitted, it defaults to -1,
            which lists every project with no limit.
 
-
     Returns:
         A dictionary with each project name listed as a key.
     """
@@ -28,7 +27,7 @@ def get_recent_projects(n: int = -1) -> Dict[str, Tuple[str, datetime]]:
         if n > 0:
             stmt = stmt.limit(n)
 
-        result = session.execute(stmt)
+        result = session.scalars(stmt)
 
-        return {r[0].name: (r[0].database_path, r[0].created_at)
+        return {r.name: (r.database_path, r.created_at)
                 for r in result}

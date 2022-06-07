@@ -44,12 +44,12 @@ def setup_project_db(project_engine: sa.engine.base.Engine) -> None:
     with db.session() as session:
         stmt = select(program_struct.Config).where(
             program_struct.Config.is_project_default == True)
-        result = session.execute(stmt)
+        result = session.scalars(stmt)
 
         # Map the default project configuration to Config objects
         # noinspection PyArgumentList
-        configs = [project_struct.Config(key=r[0].key,
-                                         value=r[0].value)
+        configs = [project_struct.Config(key=r.key,
+                                         value=r.value)
                    for r in result]
 
     # Set up the StreamingHistoryFull view and save default configuration
