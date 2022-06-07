@@ -141,7 +141,8 @@ def __determine_project_path(project_name: str, path: str = None) -> str:
     If the path doesn't point to a valid directory, it's assumed that it
     points to a file instead (regardless of whether that file exists). In this
     case, the project_name is ignored and the path is simply returned as-is
-    (though it still converted to an abspath in case it happens to be relative).
+    (though it still converted to an absolute path in case it happens to be
+    relative).
 
     --
 
