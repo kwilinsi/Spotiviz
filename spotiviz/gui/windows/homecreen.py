@@ -17,22 +17,22 @@ class HomeScreen(CenteredWindow):
 
         self.POPUP = None
         self.POPUP = NewProject()
-        self.setWindowTitle("Spotiviz - Home")
+        self.setWindowTitle('Spotiviz - Home')
 
         # Create layouts
         main_buttons_layout = QHBoxLayout()
         project_list_layout = QVBoxLayout()
 
         # Define main project buttons
-        btn_new = MainBtn("New Project")
+        btn_new = MainBtn('New Project')
         btn_new.clicked.connect(self.new_project)
         main_buttons_layout.addWidget(btn_new)
 
-        btn_open = MainBtn("Open Project")
+        btn_open = MainBtn('Open Project')
         main_buttons_layout.addWidget(btn_open)
 
         # Create list of recent projects
-        project_list_lbl = Header("Recent Projects")
+        project_list_lbl = Header('Recent Projects')
 
         project_list_layout.addWidget(project_list_lbl)
         proj_buttons = db_widgets.get_all_project_buttons()
@@ -40,8 +40,8 @@ class HomeScreen(CenteredWindow):
             project_list_layout.addWidget(b)
 
         if len(proj_buttons) == 0:
-            no_projects = QLabel("No recent projects found. "
-                                 "Create or import one first.")
+            no_projects = QLabel('No recent projects found. '
+                                 'Create or import one first.')
             no_projects.setProperty('noProjects', True)
             project_list_layout.addWidget(no_projects)
 
