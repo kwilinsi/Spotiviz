@@ -1,7 +1,6 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFrame, QWidget,
-    QSizePolicy
+    QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QWidget
 )
 
 from spotiviz.gui.widgets.header import Header
