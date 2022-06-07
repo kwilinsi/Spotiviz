@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QPushButton, QHBoxLayout, QLabel, QSizePolicy
 
 
-class ProjectButton(QPushButton):
+class ProjectBtn(QPushButton):
     """
     This is a button that represents a "recent project". It contains the
     project name and the path to that project's database file.

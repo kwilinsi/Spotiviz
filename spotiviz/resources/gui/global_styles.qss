@@ -34,6 +34,7 @@ PrimaryBtn {
     color: #ffffff;
     background-color: #2e67c9;
     border: 0px;
+    border-radius: 3px;
 }
 
 PrimaryBtn:hover:!pressed {
@@ -53,4 +54,12 @@ MainBtn {
     font-size: 16px;
     font-weight: bold;
     background-color: #2e67c9;
+}
+
+ProjectBtn {
+    background-color: #e1e1e1;
+    border-radius: 5px;
+    border-color: #adadad;
+    border-width: 1px;
+    border-style: solid;
 }
