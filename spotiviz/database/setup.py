@@ -4,7 +4,7 @@ engine and structure file.
 """
 
 import sqlalchemy as sa
-from sqlalchemy import text
+from sqlalchemy import text, select
 
 from spotiviz.database import db, sql
 from spotiviz.database.structure import program_struct, project_struct
@@ -40,8 +40,24 @@ def setup_project_db(project_engine: sa.engine.base.Engine) -> None:
     # Set up the main tables
     project_struct.Base.metadata.create_all(project_engine)
 
-    # Set up the StreamingHistoryFull view
-    with project_engine.connect() as conn:
+    # Load the default project configuration from the program database
+    with db.session() as session:
+        stmt = select(program_struct.Config).where(
+            program_struct.Config.is_project_default == True)
+        result = session.execute(stmt)
+
+        # Map the default project configuration to Config objects
+        # noinspection PyArgumentList
+        configs = [project_struct.Config(key=r[0].key,
+                                         value=r[0].value)
+                   for r in result]
+
+    # Set up the StreamingHistoryFull view and save default configuration
+    with db.session(engine=project_engine) as session:
+        session.add_all(configs)
+
         with open(resources.get_sql_resource(
                 sql.VIEW_STREAMING_HISTORY_FULL)) as file:
-            conn.execute(text(file.read()))
+            session.execute(text(file.read()))
+
+        session.commit()

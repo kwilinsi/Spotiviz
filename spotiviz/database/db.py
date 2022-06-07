@@ -27,6 +27,7 @@ def _create_engine(path: str) -> sa.engine.Engine:
 def initialize() -> None:
     """
     Initialize the engine for the global project-level database Session.
+
     Returns:
         None
     """
@@ -91,20 +92,27 @@ def get_project_engine(name: str,
                          f'"{name}".')
 
 
-def session(project_name: str = None) -> Session:
+def session(engine: Optional[sa.engine.base.Engine] = None,
+            project: Optional[str] = None) -> Session:
     """
-    Return a new Session instance created from a SQLAlchemy engine. If a
-    project name is specified, that project's engine is retrieved from the
-    PROJECT_ENGINES dictionary. If no project name is given, then the
-    GLOBAL_ENGINE is used and a session to the global program-level database
-    is returned.
+    Return a new Session instance created from a SQLAlchemy engine. If no
+    engine is specified, then the project name is used. The engine for that
+    project is retrieved from the PROJECT_ENGINES dictionary.
 
-    Note to use the GLOBAL_ENGINE, it must be initialized with db.initialize()
+    If no engine OR project name is given, then the GLOBAL_ENGINE is used and a
+    session connected to the global program-level database is returned.
+
+    Note: to use the GLOBAL_ENGINE, it must be initialized with db.initialize()
     first. To use a project engine, it must be initialized with
     db.initialize_project_engine().
 
-    If a project_name is given that does not have a matching engine,
-    an exception will be raised.
+    If the engine is omitted and the given project_name does not have a
+    matching engine, an exception will be raised.
+
+    Args:
+        engine: An optional engine to create the session from.
+        project: The name of the project to create a session for,
+                      or None to use the GLOBAL_ENGINE.
 
     Returns:
         A new session instance.
@@ -117,11 +125,14 @@ def session(project_name: str = None) -> Session:
 
     """
 
-    if project_name:
-        return Session(get_project_engine(project_name), autoflush=True)
+    # Set the engine, either from the project name or GLOBAL_ENGINE
+    if project and not engine:
+        engine = get_project_engine(project)
+    elif not engine:
+        engine = GLOBAL_ENGINE
+
+    if engine:
+        return Session(engine, autoflush=True)
     else:
-        if GLOBAL_ENGINE:
-            return Session(GLOBAL_ENGINE, autoflush=True)
-        else:
-            raise AttributeError('Global engine requested without '
-                                 'initialization.')
+        raise AttributeError('Global engine requested without '
+                             'initialization.')

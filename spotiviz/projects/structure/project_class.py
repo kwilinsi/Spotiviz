@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from typing import Any
 
 import sqlalchemy as sa
 from sqlalchemy import select
@@ -10,6 +11,8 @@ from spotiviz.database import db, setup
 from spotiviz.database.structure.program_struct import Projects
 
 from spotiviz.projects.structure import spotify_download as sd
+from spotiviz.projects.structure.config.project_config import ProjectConfig
+from spotiviz.projects.structure.config.properties import Config
 
 
 class Project:
@@ -35,6 +38,8 @@ class Project:
         self.name = name
         self.path = path
         self.created_at = created_at
+        # This stores all the configuration properties for the project
+        self.config = ProjectConfig(self)
 
     @classmethod
     def from_sql(cls, projects_record: Projects):
@@ -154,7 +159,7 @@ class Project:
             The new Session.
         """
 
-        return db.session(self.name)
+        return db.session(project=self.name)
 
     def create_database(self) -> None:
         """
@@ -191,3 +196,44 @@ class Project:
 
         d = sd.SpotifyDownload(self, path, name, download_date)
         d.save_to_database()
+
+    def get_config(self, config: Config) -> Any:
+        """
+        Get the value of some config property. This is semantically
+        equivalent to calling project.config.get(<config>).
+
+        For a shorter alias, use alias project.c(<config>).
+
+        To use the current value in the SQLite database, rather than relying
+        on the cache, use project.get_config_force_reload(<config>).
+
+        Args:
+            config: The desired Config property.
+
+        Returns:
+            The current cached value of that property.
+        """
+
+        return self.config.get(config)
+
+    # Define the alias .c() for .get_config()
+    c = get_config
+
+    def get_config_force_reload(self, config: Config) -> Any:
+        """
+        Similar to self.get_config() and self.c() (its alias), except that
+        the value is always loaded directly from the SQLite database for the
+        project, rather than using the current cached value. Calling this
+        method also updates the cache for the requested property.
+
+        This is semantically equivalent to calling
+        project.config.get_force_reload(<config>).
+
+        Args:
+            config: The desired Config property.
+
+        Returns:
+            The current value of that property in the SQLite database.
+        """
+
+        return self.config.get_force_reload(config)

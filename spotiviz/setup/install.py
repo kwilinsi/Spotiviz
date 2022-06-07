@@ -1,9 +1,13 @@
 import os.path
 
 from spotiviz import get_data
-from spotiviz.projects import manager
 from spotiviz.utils.log import LOG
+
 from spotiviz.database import db, setup, constants as con
+from spotiviz.database.structure.program_struct import Config as ConfigTbl
+
+from spotiviz.projects import manager
+from spotiviz.projects.structure.config.properties import Config
 
 
 def install_spotiviz():
@@ -36,6 +40,9 @@ def install_spotiviz():
     # Delete old project files
     manager.delete_all_projects()
 
+    # Load the default project configuration
+    load_default_config()
+
 
 def make_dir(path: str, name: str) -> None:
     """
@@ -54,3 +61,27 @@ def make_dir(path: str, name: str) -> None:
     if not os.path.exists(path):
         LOG.debug('{n} directory not found; creating it now'.format(n=name))
         os.makedirs(path)
+
+
+def load_default_config() -> None:
+    """
+    Populate the Config table in the program SQLite database. The default
+    properties for projects are set according to their defaults within the
+    _Property class.
+
+    Returns:
+        None
+    """
+
+    # Create SQLAlchemy Config objects
+
+    # noinspection PyArgumentList
+    configs = [ConfigTbl(key=prop.name,
+                         value=prop.value.default,
+                         is_project_default=True)
+               for prop in Config]
+
+    # Add each object to the Config table
+    with db.session() as session:
+        session.add_all(configs)
+        session.commit()
