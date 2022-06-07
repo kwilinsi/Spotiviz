@@ -5,7 +5,8 @@ from PyQt6.QtWidgets import QApplication
 
 from spotiviz.database import db
 
-from spotiviz.gui import homecreen, constants as const
+from spotiviz.gui import constants as const
+from spotiviz.gui.windows import homecreen
 from spotiviz.utils import resources as resc
 
 APP = None
