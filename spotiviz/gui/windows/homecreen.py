@@ -1,8 +1,10 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
-    QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QWidget
+    QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QWidget, QFileDialog
 )
+
+from spotiviz.projects import utils as ut
 
 from spotiviz.gui.windows.centered_window import CenteredWindow
 from spotiviz.gui.windows.new_project import NewProject
@@ -44,6 +46,7 @@ class HomeScreen(CenteredWindow):
         main_buttons_layout.addWidget(btn_new)
 
         btn_open = MainBtn('Open Project')
+        btn_open.clicked.connect(self.open_project)
         main_buttons_layout.addWidget(btn_open)
 
         # Create list of recent projects
@@ -82,3 +85,22 @@ class HomeScreen(CenteredWindow):
 
         self.POPUP = NewProject()
         self.POPUP.show()
+
+    def open_project(self) -> None:
+        """
+        Open a file browser, allowing the user to select the database file
+        for the project they wish to open.
+
+        Returns:
+            None
+        """
+
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            'Open Project Database File',
+            ut.get_default_projects_path(),
+            'Database file (*.db)'
+        )
+
+        if path:
+            print(f'Open project {path}')
