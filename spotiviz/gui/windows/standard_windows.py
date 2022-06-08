@@ -2,7 +2,30 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QFrame, QVBoxLayout, QWidget, QMainWindow
 
 
+class BaseWindow(QMainWindow):
+    def __init__(self, page_layout):
+        """
+        Create a new BaseWindow. Specify the layout object that will
+        contain all the widgets. This layout will be embedded in a QWidget
+        and set as the central widget in the window.
+
+        Args:
+            page_layout: The layout containing everything in the window. This
+                         will become self.base_layout and can be easily
+                         accessed later.
+        """
+
+        super().__init__()
+
+        self.base_layout = page_layout
+        base_widget = QWidget()
+        base_widget.setLayout(self.base_layout)
+        self.setCentralWidget(base_widget)
+
+
 class CenteredWindow(QMainWindow):
+    # TODO make this dependent on BaseWindow
+
     def __init__(self, page_layout):
         """
         Create a new CenteredWindow. Specify the layout object that will

@@ -11,6 +11,7 @@ from spotiviz.utils import resources as resc
 
 APP = None
 HOME = None
+PROJECT = None
 
 
 def start() -> None:

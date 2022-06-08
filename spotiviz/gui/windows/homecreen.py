@@ -5,10 +5,13 @@ from PyQt6.QtWidgets import (
 )
 
 from spotiviz.projects import manager, utils as ut
+from spotiviz.projects.structure.project_class import Project
 
-from spotiviz.gui.windows.centered_window import CenteredWindow
+from spotiviz.gui import gui
+from spotiviz.gui.windows.standard_windows import CenteredWindow
 from spotiviz.gui.windows.new_project import NewProject
-from spotiviz.gui.widgets.header import Header
+from spotiviz.gui.windows.project import ProjectWindow
+from spotiviz.gui.widgets.labels import Header
 from spotiviz.gui.widgets.generic_buttons import MainBtn
 from spotiviz.gui.widgets import db_widgets
 
@@ -18,7 +21,6 @@ class HomeScreen(CenteredWindow):
         super().__init__(QVBoxLayout())
 
         self.POPUP = None
-        self.POPUP = NewProject()
         self.setWindowTitle('Spotiviz - Home')
 
         # Populate the window layout
@@ -29,8 +31,8 @@ class HomeScreen(CenteredWindow):
 
     def create_layout(self) -> None:
         """
-        This should be called once when the window is created. It creates all
-        the widgets in the window.
+        This is called once when the window is created. It creates all the
+        widgets and layouts in the window.
 
         Returns:
             None
@@ -42,11 +44,11 @@ class HomeScreen(CenteredWindow):
 
         # Define main project buttons
         btn_new = MainBtn('New Project')
-        btn_new.clicked.connect(self.new_project)
+        btn_new.clicked.connect(self.new_project_btn)
         main_buttons_layout.addWidget(btn_new)
 
         btn_open = MainBtn('Open Project')
-        btn_open.clicked.connect(self.open_project)
+        btn_open.clicked.connect(self.open_project_btn)
         main_buttons_layout.addWidget(btn_open)
 
         # Create list of recent projects
@@ -75,7 +77,7 @@ class HomeScreen(CenteredWindow):
         self.layout.addLayout(main_buttons_layout)
         self.layout.addLayout(project_list_layout)
 
-    def new_project(self, s) -> None:
+    def new_project_btn(self) -> None:
         """
         Call this when the user creates a new project. It opens a popup
         window for creating the project.
@@ -84,10 +86,10 @@ class HomeScreen(CenteredWindow):
             None
         """
 
-        self.POPUP = NewProject()
+        self.POPUP = NewProject(self.open_project)
         self.POPUP.show()
 
-    def open_project(self) -> None:
+    def open_project_btn(self) -> None:
         """
         Open a file browser, allowing the user to select the database file
         for the project they wish to open.
@@ -95,6 +97,8 @@ class HomeScreen(CenteredWindow):
         Returns:
             None
         """
+
+        # TODO implement this button actually opening a project
 
         path, _ = QFileDialog.getOpenFileName(
             self,
@@ -118,7 +122,21 @@ class HomeScreen(CenteredWindow):
 
         sender_btn = self.sender()
         p = manager.get_project(sender_btn.project)
-        print(f'Opened project {p}')
+        self.open_project(p)
 
+    def open_project(self, project: Project) -> None:
+        """
+        This is called by all methods that open or create projects. It opens
+        a new window for the newly opened project and closes this window.
+
+        Args:
+            project: The project to open.
+
+        Returns:
+            None
+        """
+
+        gui.PROJECT = ProjectWindow(project)
+        gui.PROJECT.show()
         self.close()
 

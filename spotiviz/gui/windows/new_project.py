@@ -9,14 +9,25 @@ from PyQt6.QtWidgets import (
 
 from spotiviz.projects import utils, manager
 
-from spotiviz.gui.windows.centered_window import CenteredWindow
-from spotiviz.gui.widgets.header import Header
+from spotiviz.gui.windows.standard_windows import CenteredWindow
+from spotiviz.gui.widgets.labels import Header
 from spotiviz.gui.widgets.generic_buttons import PrimaryBtn, SecondaryBtn
 
 
 class NewProject(CenteredWindow):
-    def __init__(self):
+    def __init__(self, create_fnc):
+        """
+        Create the window for creating a new project.
+
+        Args:
+            create_fnc: The function to call when the user clicks the
+            'Create' button and makes a new project. This function should
+            accept one parameter: the Project instance that was just created.
+        """
+
         super().__init__(QVBoxLayout())
+
+        self.create_fnc = create_fnc
 
         self.setWindowTitle('Spotiviz - New Project')
 
@@ -35,8 +46,8 @@ class NewProject(CenteredWindow):
 
     def create_layout(self) -> None:
         """
-        This should be called once when the window is created. It creates all
-        the widgets in the window.
+        This is called once when the window is created. It creates all the
+        widgets and layouts in the window.
 
         Returns:
             None
@@ -164,5 +175,6 @@ class NewProject(CenteredWindow):
             None
         """
 
-        manager.create_project(self.name(), self.path())
+        p = manager.create_project(self.name(), self.path())
         self.close()
+        self.create_fnc(p)

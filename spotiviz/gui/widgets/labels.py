@@ -8,3 +8,10 @@ class Header(QLabel):
 
         self.setAlignment(Qt.AlignmentFlag.AlignHCenter |
                           Qt.AlignmentFlag.AlignBottom)
+
+
+class Subtitle(Header):
+    def __init__(self, text: str):
+        super().__init__(text)
+
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
