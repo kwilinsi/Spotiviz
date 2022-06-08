@@ -159,8 +159,8 @@ def determine_new_project_path(project_name: str, path: str = None) -> str:
     """
 
     if path is None:
-        return get_data(os.path.join(
-            'sqlite', 'projects', ut.clean_project_name(project_name)))
+        return os.path.join(ut.get_default_projects_path(),
+                            ut.clean_project_name(project_name))
     elif os.path.isdir(path):
         return os.path.abspath(
             os.path.join(path, ut.clean_project_name(project_name)))

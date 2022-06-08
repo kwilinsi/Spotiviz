@@ -1,8 +1,11 @@
 import datetime
+import os.path
 import re
 from datetime import date, timedelta, datetime
 from typing import Optional, Iterable
 from sqlalchemy import select
+
+from spotiviz import get_data
 
 from spotiviz.database import db
 from spotiviz.database.structure.program_struct import Projects
@@ -171,3 +174,15 @@ def date_to_str(date_obj: date) -> str:
     except Exception:
         raise ValueError(f'Invalid date object {date_obj} cannot be formatted '
                          f'as a date string.')
+
+
+def get_default_projects_path() -> str:
+    """
+    Get the absolute path to the default directory where project databases are
+    stored.
+
+    Returns:
+        The path.
+    """
+
+    return get_data(os.path.join('sqlite', 'projects'))
