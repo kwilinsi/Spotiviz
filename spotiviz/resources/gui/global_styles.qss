@@ -63,3 +63,7 @@ ProjectBtn {
     border-width: 1px;
     border-style: solid;
 }
+
+ProjectBtn:hover:!pressed {
+    background-color: #ededed;
+}
