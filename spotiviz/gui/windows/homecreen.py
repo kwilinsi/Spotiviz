@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QWidget, QFileDialog
 )
 
-from spotiviz.projects import utils as ut
+from spotiviz.projects import manager, utils as ut
 
 from spotiviz.gui.windows.centered_window import CenteredWindow
 from spotiviz.gui.windows.new_project import NewProject
@@ -53,7 +53,8 @@ class HomeScreen(CenteredWindow):
         project_list_lbl = Header('Recent Projects')
 
         project_list_layout.addWidget(project_list_lbl)
-        proj_buttons = db_widgets.get_all_project_buttons()
+        proj_buttons = db_widgets.get_all_project_buttons(
+            self.project_button_open)
         for b in proj_buttons:
             project_list_layout.addWidget(b)
 
@@ -104,3 +105,20 @@ class HomeScreen(CenteredWindow):
 
         if path:
             print(f'Open project {path}')
+            self.close()
+
+    def project_button_open(self) -> None:
+        """
+        This method is called whenever a user clicks one of the recent
+        project buttons. It opens that project.
+
+        Returns:
+            None
+        """
+
+        sender_btn = self.sender()
+        p = manager.get_project(sender_btn.project)
+        print(f'Opened project {p}')
+
+        self.close()
+

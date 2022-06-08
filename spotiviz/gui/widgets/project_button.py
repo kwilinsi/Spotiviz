@@ -10,7 +10,10 @@ class ProjectBtn(QPushButton):
     project name and the path to that project's database file.
     """
 
-    def __init__(self, project: str, path: str = None):
+    def __init__(self,
+                 project: str,
+                 path: str = None,
+                 click_fcn = None):
         """
         Create a new ProjectButton.
 
@@ -23,9 +26,12 @@ class ProjectBtn(QPushButton):
         Args:
             project: The name of the project.
             path: The location of the project's SQLite database file.
+            click_fcn: The function to call when the button is clicked.
         """
 
         super().__init__()
+
+        self.project = project
 
         layout = QHBoxLayout()
 
@@ -55,3 +61,6 @@ class ProjectBtn(QPushButton):
         self.setMaximumSize(750, 65)
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
                            QSizePolicy.Policy.Expanding)
+
+        # Set the function to call when clicked
+        self.clicked.connect(click_fcn)
