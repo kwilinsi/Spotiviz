@@ -20,32 +20,60 @@ class NewProject(CenteredWindow):
 
         self.setWindowTitle('Spotiviz - New Project')
 
+        # This becomes True if the user manually selects a database path
+        # using the 'Browse' button.
         self.set_manual_path: bool = False
+
+        # Create and populate layouts
+        self.field_name = None
+        self.field_path = None
+        self.set_layout()
+
+        # Set initial window size
+        self.set_fixed_size()
+        self.resize(700, 400)
+
+    def set_layout(self) -> None:
+        """
+        This should be called once when the window is created. It creates all
+        the widgets in the window.
+
+        Returns:
+            None
+        """
 
         # Create layouts
         field_name_layout = QHBoxLayout()
         field_path_layout = QHBoxLayout()
         buttons_layout = QHBoxLayout()
 
+        # Set spacing
         self.layout.setContentsMargins(50, 50, 50, 50)
         self.layout.setSpacing(20)
 
         # Populate layouts
 
+        # Add the header
         title = Header('Create New Project')
         title.setContentsMargins(0, 0, 0, 10)
         self.layout.addWidget(title)
 
+        # Add layouts to main layout
         self.layout.addLayout(field_name_layout)
         self.layout.addLayout(field_path_layout)
         self.layout.addLayout(buttons_layout)
 
+        # Add the prompt for the project name
+
         prompt_name = QLabel('Name:')
-        self.field_name = QLineEdit(f'MyProject{random.randint(10000, 99999)}')
+        # noinspection PyArgumentList
+        self.field_name = QLineEdit(placeholderText='Enter the project name')
+        self.field_name.setText(f'MyProject{random.randint(10000, 99999)}')
         self.field_name.textChanged.connect(self.on_name_change)
         field_name_layout.addWidget(prompt_name)
         field_name_layout.addWidget(self.field_name)
 
+        # Add the prompt for the database path
         prompt_path = QLabel('Path:')
         self.field_path = QLineEdit(
             manager.determine_new_project_path(self.name()))
@@ -55,16 +83,13 @@ class NewProject(CenteredWindow):
         field_path_layout.addWidget(self.field_path)
         field_path_layout.addWidget(path_browse_btn)
 
+        # Add the cancel and create buttons
         btn_cancel = SecondaryBtn('Cancel')
         btn_cancel.clicked.connect(self.close)
         btn_create = PrimaryBtn('Create')
         btn_create.clicked.connect(self.create_project)
         buttons_layout.addWidget(btn_cancel)
         buttons_layout.addWidget(btn_create)
-
-        # Set fixed and initial sizes
-        self.set_fixed_size()
-        self.resize(700, 400)
 
     def open_file_browser(self) -> None:
         """
@@ -96,14 +121,20 @@ class NewProject(CenteredWindow):
             None
         """
 
+        # If the user has already set the path manually, don't change it
         if self.set_manual_path:
             return
 
-        # Get current directory
-        d = Path(self.path()).parent.absolute()
+        # Get current directory. Use the parent dir unless the path is
+        # already pointing to a directory
+        d = self.path()
+        d = d if os.path.isdir(d) else Path(d).parent.absolute()
 
-        self.field_path.setText(
-            os.path.join(d, utils.clean_project_name(self.name())))
+        # Determine the file name
+        f = utils.clean_project_name(self.name()) if len(self.name()) else ''
+
+        # Combine directory and file and set as the path
+        self.field_path.setText(os.path.join(d, f))
 
     def name(self) -> str:
         """
