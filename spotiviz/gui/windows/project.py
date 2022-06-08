@@ -1,8 +1,10 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QFrame, QFileDialog
+from PyQt6.QtGui import QAction
 
 from spotiviz.projects.structure.project_class import Project
 
+from spotiviz.gui import gui
 from spotiviz.gui.windows.standard_windows import BaseWindow
 from spotiviz.gui.widgets.labels import Header, Subtitle
 from spotiviz.gui.widgets.generic_buttons import MainBtn
@@ -27,9 +29,54 @@ class ProjectWindow(BaseWindow):
         self.body_layout = QVBoxLayout()
         self.base_layout.addLayout(self.body_layout)
 
+        # Define the actions and menu bar
+        self.action_import = None
+        self.action_close = None
+        self.action_close_project = None
+        self.define_actions()
+        self.create_menubar()
+
         self.create_layout()
 
         self.setWindowTitle(self.project.name)
+
+    def define_actions(self) -> None:
+        """
+        Define the actions that are found in the menu bar of the window. This
+        is called once when the window is created, just before calling
+        .create_menubar().
+
+        Returns:
+            None
+        """
+
+        self.action_import = QAction('&Import', self)
+        self.action_import.setToolTip('Import a Spotify Download')
+        self.action_import.triggered.connect(self.import_download_btn)
+
+        self.action_close = QAction('&Close', self)
+        self.action_close.triggered.connect(self.close_program)
+
+        self.action_close_project = QAction('Close &Project', self)
+        self.action_close_project.triggered.connect(self.close_project)
+
+    def create_menubar(self) -> None:
+        """
+        This is called once when the window is created to define the menu bar
+        at the top. It is called after .define_actions(), as it depends on
+        those actions to function.
+
+        Returns:
+            None
+        """
+
+        menu = self.menuBar()
+        file_menu = menu.addMenu('&File')
+
+        file_menu.addAction(self.action_import)
+        file_menu.addSeparator()
+        file_menu.addAction(self.action_close)
+        file_menu.addAction(self.action_close_project)
 
     def create_layout(self) -> None:
         """
@@ -89,7 +136,6 @@ class ProjectWindow(BaseWindow):
         btn_open_layout.addWidget(btn_open)
         layout.addLayout(btn_open_layout)
 
-
         frame.setMaximumSize(frame.sizeHint() * 1.25)
 
         return frame
@@ -111,6 +157,27 @@ class ProjectWindow(BaseWindow):
         if d:
             print(f'User imported directory \'{d}\'')
 
+    def close_program(self) -> None:
+        """
+        This is called when a user clicks the 'Close' button in the 'File'
+        menu. It closes the program.
 
+        Returns:
+            None
+        """
 
+        self.close()
 
+    def close_project(self) -> None:
+        """
+        This is called when a user clicks the 'Close Project' button in the
+        'File' menu. It closes this window, but first it creates a new GUI
+        window for the homepage, allowing the user to open a different
+        project or create a new one.
+
+        Returns:
+            None
+        """
+
+        gui.HOME.show()
+        self.close()
