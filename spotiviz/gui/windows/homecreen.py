@@ -19,6 +19,21 @@ class HomeScreen(CenteredWindow):
         self.POPUP = NewProject()
         self.setWindowTitle('Spotiviz - Home')
 
+        # Populate the window layout
+        self.create_layout()
+
+        self.set_fixed_size()
+        self.resize(800, 500)
+
+    def create_layout(self) -> None:
+        """
+        This should be called once when the window is created. It creates all
+        the widgets in the window.
+
+        Returns:
+            None
+        """
+
         # Create layouts
         main_buttons_layout = QHBoxLayout()
         project_list_layout = QVBoxLayout()
@@ -55,9 +70,6 @@ class HomeScreen(CenteredWindow):
         # Combine layouts
         self.layout.addLayout(main_buttons_layout)
         self.layout.addLayout(project_list_layout)
-
-        self.set_fixed_size()
-        self.resize(800, 500)
 
     def new_project(self, s) -> None:
         """

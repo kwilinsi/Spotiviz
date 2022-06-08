@@ -27,13 +27,13 @@ class NewProject(CenteredWindow):
         # Create and populate layouts
         self.field_name = None
         self.field_path = None
-        self.set_layout()
+        self.create_layout()
 
         # Set initial window size
         self.set_fixed_size()
         self.resize(700, 400)
 
-    def set_layout(self) -> None:
+    def create_layout(self) -> None:
         """
         This should be called once when the window is created. It creates all
         the widgets in the window.
