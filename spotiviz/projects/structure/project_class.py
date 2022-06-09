@@ -195,7 +195,7 @@ class Project:
             None
         """
 
-        d = sd.SpotifyDownload(self, path, name, download_date)
+        d = sd.SpotifyDownload(self, path, name, download_date, True)
         d.save_to_database()
 
     def get_downloads(self) -> List[sd.SpotifyDownload]:

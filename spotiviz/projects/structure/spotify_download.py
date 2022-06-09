@@ -31,7 +31,9 @@ class SpotifyDownload:
                  project: pc.Project,
                  path: str,
                  name: str = None,
-                 download_date: date = None):
+                 download_date: date = None,
+                 index: bool = False):
+
         """
         Initialize a SpotifyDownload instance by specifying the project to
         which it is attached and the path to a directory containing a single
@@ -52,6 +54,9 @@ class SpotifyDownload:
                   bottom-level directory in the path).
             download_date: [Optional] The date that the download was requested
                            from Spotify.
+            index: Whether the contents of this download should be indexed
+                   immediately. Set this to True if you don't know for sure
+                   that the directory is actually a Spotify download.
 
         Raises:
             NotADirectoryError: If the path does not point to a valid directory.
@@ -73,16 +78,20 @@ class SpotifyDownload:
         self.id: int = -1
 
         # Index the files in the download for later
-        self.__index()
+        if index:
+            self.__index()
 
-        # Validate the directory contents to make sure it's a Spotify download
-        if not self.is_valid_download():
-            raise ValueError(f'Invalid path (not Spotify '
-                             f'download): \'{path}\'')
+            # Validate the directory contents to make sure it's a Spotify
+            # download
+            if not self.is_valid_download():
+                raise ValueError(f'Invalid path (not Spotify '
+                                 f'download): \'{path}\'')
 
         # Print a debug message that the download was created
         LOG.debug(f'Created download instance at \'{path}\'')
-        LOG.debug(f'  Indexed {len(self.files)} files')
+
+        if index:
+            LOG.debug(f'  Indexed {len(self.files)} files')
 
     def __str__(self) -> str:
         """
