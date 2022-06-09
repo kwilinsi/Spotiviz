@@ -11,6 +11,12 @@
     color: #555555;
 }
 
+*[bordered-label="true"] {
+    border-color: #adadad;
+    border-width: 1px;
+    border-style: solid;
+}
+
 *[noProjects="true"] {
     color: #8C99a3;
     font-size: 16px;
@@ -44,6 +50,10 @@ PrimaryBtn {
 
 PrimaryBtn:hover:!pressed {
     background-color: #518cf0;
+}
+
+PrimaryBtn:disabled {
+    background-color: #a1b4d6;
 }
 
 SecondaryBtn {

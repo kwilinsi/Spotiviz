@@ -15,6 +15,12 @@ from spotiviz.gui.widgets.generic_buttons import PrimaryBtn, SecondaryBtn
 
 
 class NewProject(CenteredWindow):
+    """
+    This class constitutes the popup window that is shown whenever a user
+    creates a new Spotiviz project. It asks the user for the name of the
+    project and the path where the SQLite database should be stored.
+    """
+
     def __init__(self, create_fnc):
         """
         Create the window for creating a new project.

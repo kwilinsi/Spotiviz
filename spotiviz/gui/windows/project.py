@@ -5,6 +5,7 @@ from PyQt6.QtGui import QAction
 from spotiviz.projects.structure.project_class import Project
 
 from spotiviz.gui import gui
+from spotiviz.gui.windows.import_download import ImportDownload
 from spotiviz.gui.windows.standard_windows import BaseWindow
 from spotiviz.gui.widgets.labels import Header, Subtitle
 from spotiviz.gui.widgets.generic_buttons import MainBtn
@@ -25,14 +26,19 @@ class ProjectWindow(BaseWindow):
         # Attach the project instance to this window
         self.project = project
 
+        # Declare variables that will be defined elsewhere
+        self.import_popup = None
+        self.action_import = None
+        self.action_close = None
+        self.action_close_project = None
+
+        # --------------------
+
         # Create the body layout and add it to the base
         self.body_layout = QVBoxLayout()
         self.base_layout.addLayout(self.body_layout)
 
         # Define the actions and menu bar
-        self.action_import = None
-        self.action_close = None
-        self.action_close_project = None
         self.define_actions()
         self.create_menubar()
 
@@ -149,13 +155,8 @@ class ProjectWindow(BaseWindow):
             None
         """
 
-        d = QFileDialog.getExistingDirectory(
-            self,
-            'Open Spotify Download Directory'
-        )
-
-        if d:
-            print(f'User imported directory \'{d}\'')
+        self.import_popup = ImportDownload(self.project)
+        self.import_popup.show()
 
     def close_program(self) -> None:
         """
