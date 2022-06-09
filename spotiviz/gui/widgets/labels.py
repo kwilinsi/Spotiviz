@@ -15,3 +15,8 @@ class Subtitle(Header):
         super().__init__(text)
 
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+
+class Error(QLabel):
+    def __init__(self, text: str):
+        super().__init__(text)

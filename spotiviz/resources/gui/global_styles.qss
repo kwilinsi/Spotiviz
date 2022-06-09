@@ -40,6 +40,10 @@ Subtitle {
     font-style: italic;
 }
 
+Error {
+    color: #ba1c1c;
+}
+
 PrimaryBtn {
     font-size: 14px;
     color: #ffffff;

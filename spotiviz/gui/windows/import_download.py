@@ -1,15 +1,16 @@
-import datetime
+from datetime import datetime
 import os.path
 
-from PyQt6.QtCore import Qt, QDateTime, QDate
+from PyQt6.QtCore import Qt, QDateTime, QDate, QRegularExpression
 from PyQt6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QDateEdit,
     QFileDialog, QSizePolicy, QFrame, QGridLayout
 )
+from PyQt6.QtGui import QRegularExpressionValidator
 
 from spotiviz.projects.structure.project_class import Project
 
-from spotiviz.gui.widgets.labels import Header
+from spotiviz.gui.widgets.labels import Header, Error
 from spotiviz.gui.windows.standard_windows import CenteredWindow
 from spotiviz.gui.widgets.generic_buttons import PrimaryBtn, SecondaryBtn
 
@@ -40,6 +41,8 @@ class ImportDownload(CenteredWindow):
         self.field_name = None
         self.field_date = None
         self.btn_import = None
+        self.date_error = None
+        self.date = None
 
         self.setWindowTitle(f'{self.project.name} - Import')
 
@@ -102,25 +105,23 @@ class ImportDownload(CenteredWindow):
 
         # Add the prompt for the date
         prompt_date = QLabel('Date [optional]:')
-        now = datetime.datetime.now()
         # noinspection PyArgumentList
-        self.field_date = QLineEdit(placeholderText=now.strftime('%m/%d/%Y'))
+        self.field_date = QLineEdit(
+            placeholderText=datetime.now().strftime('%m/%d/%Y'))
         max_width = self.field_date.fontMetrics().horizontalAdvance(
             '06/09/2002') * 2
         self.field_date.setMaximumWidth(max_width)
+        validator = QRegularExpressionValidator(
+            QRegularExpression('[\\d/-]{0,10}'))
+        self.field_date.setValidator(validator)
+        self.date_error = Error('')
+
+        date_layout = QHBoxLayout()
+        date_layout.addWidget(self.field_date)
+        date_layout.addWidget(self.date_error)
 
         fields.addWidget(prompt_date, 2, 0)
-        fields.addWidget(self.field_date, 2, 1)
-
-        #field_date_nest_layout = QHBoxLayout()
-        #field_date_nest_layout.addWidget(prompt_date)
-        #field_date_nest_layout.addWidget(self.field_date)
-        #field_date_nest_layout.setSpacing(20)
-        #field_date_frame = QFrame()
-        #field_date_frame.setLayout(field_date_nest_layout)
-        ##field_date_frame.setMaximumWidth(field_date_frame.sizeHint())
-        #field_date_layout.addWidget(field_date_frame)
-        #field_date_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        fields.addLayout(date_layout, 2, 1)
 
         # Add the cancel and import buttons
         btn_cancel = SecondaryBtn('Cancel')
@@ -161,5 +162,57 @@ class ImportDownload(CenteredWindow):
             None
         """
 
+        try:
+            self.validate_date()
+        except ValueError:
+            return
+        self.date_error.setText('')
+
         print('Imported')
         self.close()
+
+    def validate_date(self) -> None:
+        """
+        Make sure the date field is either empty or contains a valid date. If
+        it's not valid, an error message is placed next to the date field and
+        a ValueError is raised.
+
+        The parsed date is stored in self.date for later.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: If the date is not valid.
+        """
+
+        date = self.field_date.text()
+        self.date = None
+
+        # If there is no date, it passes validation, as it's optional
+        if not date:
+            return
+
+        # Attempt to parse the date
+        formats = ['%m/%d/%Y', '%m/%d/%y', '%m-%d-%Y', '%m-%d-%y']
+        for f in formats:
+            try:
+                self.date = datetime.strptime(date, f)
+            except ValueError:
+                pass
+
+        # If the date wasn't set, the formatting failed
+        if self.date is None:
+            self.date_error.setText(
+                'Invalid date: use format mm/dd/yyyy.')
+            raise ValueError()
+
+        if self.date > datetime.now():
+            self.date_error.setText(
+                'The download can\'t be from the future.')
+            raise ValueError()
+
+        if self.date < datetime(2006, 4, 23):
+            self.date_error.setText(
+                'Date must be after Spotify was founded.')
+            raise ValueError
