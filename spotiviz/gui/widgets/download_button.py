@@ -27,6 +27,8 @@ class DownloadBtn(QPushButton):
 
         super().__init__()
 
+        self.download = download
+
         layout = QHBoxLayout()
 
         # Get the download name, path, and date as labels

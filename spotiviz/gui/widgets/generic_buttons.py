@@ -16,6 +16,11 @@ class SecondaryBtn(PrimaryBtn):
         super().__init__(text)
 
 
+class DeleteBtn(PrimaryBtn):
+    def __init__(self, text: str):
+        super().__init__(text)
+
+
 class MainBtn(PrimaryBtn):
     def __init__(self, text: str):
         super().__init__(text)

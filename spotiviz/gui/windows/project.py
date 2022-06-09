@@ -15,6 +15,8 @@ from spotiviz.gui.windows.standard_windows import BaseWindow
 from spotiviz.gui.widgets.labels import Header, Subtitle
 from spotiviz.gui.widgets.generic_buttons import MainBtn
 from spotiviz.gui.widgets.download_button import DownloadBtn
+from spotiviz.gui.windows.download_info import DownloadInfo
+from spotiviz.gui.widgets.not_implemented import this_is_not_yet_implemented
 
 
 class ProjectWindow(BaseWindow):
@@ -211,6 +213,11 @@ class ProjectWindow(BaseWindow):
         """
 
         print('Clicked spotify download button')
+        sender_btn = self.sender()
+        dialog = DownloadInfo(sender_btn.download,
+                              lambda: this_is_not_yet_implemented(self),
+                              self)
+        dialog.exec()
 
     def import_download_btn(self) -> None:
         """
