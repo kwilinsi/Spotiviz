@@ -88,6 +88,7 @@ class ImportDownload(CenteredWindow):
         self.field_path.setProperty('bordered-label', True)
         self.field_path.setSizePolicy(QSizePolicy.Policy.Expanding,
                                       QSizePolicy.Policy.Preferred)
+        self.field_path.mousePressEvent = self.update_path
         path_browse_btn = QPushButton('Browse')
         path_browse_btn.clicked.connect(self.update_path)
         fields.addWidget(prompt_path, 0, 0)
@@ -134,7 +135,7 @@ class ImportDownload(CenteredWindow):
         buttons_layout.addWidget(self.btn_import)
         buttons_layout.setContentsMargins(0, 10, 0, 0)
 
-    def update_path(self) -> None:
+    def update_path(self, e) -> None:
         """
         This is called whenever the user clicks the 'Browse' button to select
         the directory containing the Spotify download.
