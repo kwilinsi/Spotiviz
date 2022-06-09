@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from spotiviz.database import db, setup
 from spotiviz.database.structure.program_struct import Projects
+from spotiviz.database.structure.project_struct import Downloads
 
 from spotiviz.projects.structure import spotify_download as sd
 from spotiviz.projects.structure.config.project_config import ProjectConfig
@@ -196,6 +197,23 @@ class Project:
 
         d = sd.SpotifyDownload(self, path, name, download_date)
         d.save_to_database()
+
+    def get_downloads(self) -> List[sd.SpotifyDownload]:
+        """
+        Get a list of SpotifyDownloads attached to this project. This is done
+        by querying the database.
+
+        Note: this method assumes that the SQLAlchemy database engine has been
+        initialized already.
+
+        Returns:
+            The list of downloads.
+        """
+
+        with self.open_session() as session:
+            result = session.scalars(select(Downloads))
+            return [sd.SpotifyDownload(self, r.path, r.name, r.download_date)
+                    for r in result]
 
     def get_config(self, config: Config) -> Any:
         """

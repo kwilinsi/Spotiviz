@@ -1,3 +1,5 @@
+from typing import Callable
+
 import os.path
 
 from PyQt6.QtCore import Qt
@@ -13,7 +15,7 @@ class ProjectBtn(QPushButton):
     def __init__(self,
                  project: str,
                  path: str = None,
-                 click_fcn = None):
+                 click_fcn: Callable = None):
         """
         Create a new ProjectButton.
 
@@ -26,7 +28,7 @@ class ProjectBtn(QPushButton):
         Args:
             project: The name of the project.
             path: The location of the project's SQLite database file.
-            click_fcn: The function to call when the button is clicked.
+            click_fcn: The function to call when this button is clicked.
         """
 
         super().__init__()

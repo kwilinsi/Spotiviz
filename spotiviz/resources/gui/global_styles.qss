@@ -86,3 +86,15 @@ ProjectBtn {
 ProjectBtn:hover:!pressed {
     background-color: #ededed;
 }
+
+DownloadBtn {
+    background-color: #e6ecf7;
+    border-radius: 5px;
+    border-color: #a6b0bf;
+    border-width: 1px;
+    border-style: solid;
+}
+
+DownloadBtn:hover:!pressed {
+    background-color: #f2f5fa;
+}

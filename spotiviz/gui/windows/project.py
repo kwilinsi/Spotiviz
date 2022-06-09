@@ -1,14 +1,20 @@
+from typing import List
+
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QFrame, QFileDialog
+from PyQt6.QtWidgets import (
+    QMainWindow, QHBoxLayout, QVBoxLayout, QFrame, QFileDialog, QLabel
+)
 from PyQt6.QtGui import QAction
 
 from spotiviz.projects.structure.project_class import Project
+from spotiviz.projects.structure.spotify_download import SpotifyDownload
 
 from spotiviz.gui import gui
 from spotiviz.gui.windows.import_download import ImportDownload
 from spotiviz.gui.windows.standard_windows import BaseWindow
 from spotiviz.gui.widgets.labels import Header, Subtitle
 from spotiviz.gui.widgets.generic_buttons import MainBtn
+from spotiviz.gui.widgets.download_button import DownloadBtn
 
 
 class ProjectWindow(BaseWindow):
@@ -93,6 +99,7 @@ class ProjectWindow(BaseWindow):
             None
         """
 
+        self.body_layout.setContentsMargins(50, 50, 50, 50)
         self.fill_body_layout()
 
     def fill_body_layout(self) -> None:
@@ -106,10 +113,21 @@ class ProjectWindow(BaseWindow):
             None
         """
 
-        self.body_layout.setContentsMargins(50, 50, 50, 50)
+        downloads = self.project.get_downloads()
 
-        # Add the empty project frame to the body
-        self.body_layout.addWidget(self.get_empty_project_layout())
+        # If there are no downloads, add the empty project frame to the body
+        if not downloads:
+            l = self.get_empty_project_layout()
+            if self.body_layout.itemAt(0):
+                self.body_layout.itemAt(0).deleteLater()
+            self.body_layout.addWidget(l)
+            return
+
+        # Otherwise, list the downloads in the body
+        l = self.get_downloads_layout(downloads)
+        if self.body_layout.itemAt(0):
+            self.body_layout.itemAt(0).deleteLater()
+        self.body_layout.addWidget(l)
 
     def get_empty_project_layout(self) -> QFrame:
         """
@@ -119,6 +137,8 @@ class ProjectWindow(BaseWindow):
         Returns:
             A QFrame containing the widgets.
         """
+
+        self.body_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Create frame and layout
         frame = QFrame()
@@ -142,14 +162,60 @@ class ProjectWindow(BaseWindow):
         btn_open_layout.addWidget(btn_open)
         layout.addLayout(btn_open_layout)
 
-        frame.setMaximumSize(frame.sizeHint() * 1.25)
+        frame.setMaximumSize(frame.sizeHint())
 
         return frame
+
+    def get_downloads_layout(self, downloads: List[SpotifyDownload]) -> QFrame:
+        """
+        Create a layout for the body of the project window that lists all the
+        Spotify downloads associated with the project.
+
+        Args:
+            downloads: The list of downloads.
+
+        Returns:
+            The layout embedded in a QFrame widget.
+        """
+
+        self.body_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        # Create frame and layout
+        frame = QFrame()
+        layout = QVBoxLayout()
+        frame.setLayout(layout)
+
+        # Add text
+        head = Header('Spotify Downloads')
+        head.setContentsMargins(0, 0, 0, 10)
+        layout.addWidget(head)
+
+        # Add buttons for each Spotify download
+        for download in downloads:
+            layout.addWidget(
+                DownloadBtn(download, self.spotify_download_btn))
+
+        layout.setSpacing(10)
+
+        return frame
+
+    def spotify_download_btn(self) -> None:
+        """
+        This is called whenever a user clicks one of the Spotify Download
+        buttons in the project body. It opens a window where they can see
+        more information on the download and possibly remove it from the
+        project.
+
+        Returns:
+            None
+        """
+
+        print('Clicked spotify download button')
 
     def import_download_btn(self) -> None:
         """
         This is called whenever the user requests to import a Spotify
-        download. It opens a file dialog for the user to select the directory.
+        download. It opens the import download popup window.
 
         Returns:
             None
