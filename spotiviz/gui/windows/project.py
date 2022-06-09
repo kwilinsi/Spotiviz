@@ -39,6 +39,7 @@ class ProjectWindow(BaseWindow):
         self.action_import = None
         self.action_close = None
         self.action_close_project = None
+        self.action_preferences = None
 
         # --------------------
 
@@ -74,6 +75,10 @@ class ProjectWindow(BaseWindow):
         self.action_close_project = QAction('Close &Project', self)
         self.action_close_project.triggered.connect(self.close_project)
 
+        self.action_preferences = QAction('&Preferences', self)
+        self.action_preferences.triggered.connect(
+            lambda: this_is_not_yet_implemented(self))
+
     def create_menubar(self) -> None:
         """
         This is called once when the window is created to define the menu bar
@@ -91,6 +96,10 @@ class ProjectWindow(BaseWindow):
         file_menu.addSeparator()
         file_menu.addAction(self.action_close)
         file_menu.addAction(self.action_close_project)
+
+        edit_menu = menu.addMenu('&Edit')
+
+        edit_menu.addAction(self.action_preferences)
 
     def create_layout(self) -> None:
         """
