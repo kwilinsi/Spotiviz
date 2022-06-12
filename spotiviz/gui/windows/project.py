@@ -3,7 +3,7 @@ from typing import List
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
-    QVBoxLayout, QStackedLayout, QFrame, QScrollArea, QWidget
+    QVBoxLayout, QStackedLayout, QFrame, QScrollArea, QWidget, QSizePolicy
 )
 
 from spotiviz.gui import gui
@@ -177,8 +177,8 @@ class ProjectBody(QStackedLayout):
         self.project = window.project
         self.window = window
 
-        self.frm_empty_project = self.get_frm_empty_project()
-        self.addWidget(self.frm_empty_project)
+        self.empty_project = self.get_empty_project()
+        self.addWidget(self.empty_project)
 
         self.lyt_downloads_list = QVBoxLayout()
         self.addWidget(self.get_scroll_downloads_list())
@@ -204,31 +204,28 @@ class ProjectBody(QStackedLayout):
         # If there are no downloads, add the empty project layout to this frame
         if not downloads:
             self.setCurrentIndex(0)
-            self.setAlignment(Qt.AlignmentFlag.AlignCenter)
             return
 
         # Otherwise, list the downloads
         self.update_downloads_list(downloads)
         self.setCurrentIndex(1)
-        self.setAlignment(Qt.AlignmentFlag.AlignTop |
-                          Qt.AlignmentFlag.AlignHCenter)
 
-    def get_frm_empty_project(self) -> QFrame:
+    def get_empty_project(self) -> QWidget:
         """
-        Create the frame that contains the standard widgets for an empty
+        Create the widget that contains the standard widgets for an empty
         project: a header and a button to import Spotify downloads. Put this
-        layout in a frame and return it.
+        layout in a frame and center it within a generic widget.
 
-        This frame will be stored in self.frm_empty_project.
+        This frame will be stored in self.empty_project.
 
         Returns:
-            A frame containing the layout.
+            A widget containing the layout.
         """
 
         # Create frame and layout
-        frame = QFrame()
+        widget = QWidget()
         layout = QVBoxLayout()
-        frame.setLayout(layout)
+        widget.setLayout(layout)
 
         # Set spacing and alignment
         layout.setSpacing(10)
@@ -247,9 +244,17 @@ class ProjectBody(QStackedLayout):
         btn_open_layout.addWidget(btn_open)
         layout.addLayout(btn_open_layout)
 
-        frame.setMaximumSize(frame.sizeHint())
+        widget.setMaximumSize(widget.sizeHint())
 
-        return frame
+        # Now enclose the widget in ANOTHER layout inside another frame. This
+        # is necessary to be able to center it within self, a StackedLayout.
+        enclosing_widget = QWidget()
+        enclosing_layout = QVBoxLayout()
+        enclosing_widget.setLayout(enclosing_layout)
+        enclosing_layout.addWidget(widget)
+        enclosing_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        return enclosing_widget
 
     def get_scroll_downloads_list(self) -> QFrame:
         """
@@ -265,9 +270,9 @@ class ProjectBody(QStackedLayout):
         """
 
         # Create the main layout and frame
-        frame = QFrame()
+        widget = QFrame()
         layout = QVBoxLayout()
-        frame.setLayout(layout)
+        widget.setLayout(layout)
 
         # Add the header
         head = Header('Spotify Downloads')
@@ -275,21 +280,28 @@ class ProjectBody(QStackedLayout):
         layout.addWidget(head)
 
         self.lyt_downloads_list.addStretch()
+        self.lyt_downloads_list.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         # Add the scrollable layout
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        widget = QWidget()
-        widget.setLayout(self.lyt_downloads_list)
-        scroll.setWidget(widget)
+        list_widget = QWidget()
+        list_widget.setLayout(self.lyt_downloads_list)
+        scroll.setWidget(list_widget)
         layout.addWidget(scroll)
 
-        # scroll.setVerticalScrollBarPolicy(
-        # Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        widget.setMinimumWidth(600)
+        widget.setMaximumWidth(700)
 
-        frame.setMinimumWidth(600)
-
-        return frame
+        # Now enclose the widget in ANOTHER layout inside another frame. This
+        # is necessary to be able to center it within self, a StackedLayout.
+        enclosing_widget = QWidget()
+        enclosing_layout = QVBoxLayout()
+        enclosing_widget.setLayout(enclosing_layout)
+        enclosing_layout.addWidget(widget)
+        enclosing_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter |
+                                      Qt.AlignmentFlag.AlignTop)
+        return enclosing_widget
 
     def update_downloads_list(self,
                               downloads: List[SpotifyDownload]) -> None:
