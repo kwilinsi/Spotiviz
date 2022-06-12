@@ -61,7 +61,8 @@ class SpotifyDownload:
         Raises:
             NotADirectoryError: If the path does not point to a valid directory.
             ValueError: If the path points to a directory that does not
-                        contain a Spotify download.
+                        contain a Spotify download. (This is only possible if
+                        the 'index' parameter is True).
         """
 
         # Make sure that the path points to a directory

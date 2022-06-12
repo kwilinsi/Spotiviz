@@ -47,8 +47,9 @@ class DownloadBtn(QPushButton):
         layout.setSpacing(30)
         self.setLayout(layout)
         self.setMinimumSize(400, 50)
+        self.setMaximumSize(600, 50)
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
-                           QSizePolicy.Policy.Preferred)
+                           QSizePolicy.Policy.Fixed)
 
         # Set the function to call when clicked
         self.clicked.connect(click_fcn)

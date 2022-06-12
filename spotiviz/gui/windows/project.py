@@ -1,22 +1,21 @@
 from typing import List
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
-    QMainWindow, QHBoxLayout, QVBoxLayout, QFrame, QFileDialog, QLabel
-)
 from PyQt6.QtGui import QAction
-
-from spotiviz.projects.structure.project_class import Project
-from spotiviz.projects.structure.spotify_download import SpotifyDownload
+from PyQt6.QtWidgets import (
+    QVBoxLayout, QStackedLayout, QFrame, QScrollArea, QWidget
+)
 
 from spotiviz.gui import gui
+from spotiviz.gui.widgets.download_button import DownloadBtn
+from spotiviz.gui.widgets.generic_buttons import MainBtn
+from spotiviz.gui.widgets.labels import Header, Subtitle
+from spotiviz.gui.widgets.not_implemented import this_is_not_yet_implemented
+from spotiviz.gui.windows.download_info import DownloadInfo
 from spotiviz.gui.windows.import_download import ImportDownload
 from spotiviz.gui.windows.standard_windows import BaseWindow
-from spotiviz.gui.widgets.labels import Header, Subtitle
-from spotiviz.gui.widgets.generic_buttons import MainBtn
-from spotiviz.gui.widgets.download_button import DownloadBtn
-from spotiviz.gui.windows.download_info import DownloadInfo
-from spotiviz.gui.widgets.not_implemented import this_is_not_yet_implemented
+from spotiviz.projects.structure.project_class import Project
+from spotiviz.projects.structure.spotify_download import SpotifyDownload
 
 
 class ProjectWindow(BaseWindow):
@@ -44,14 +43,12 @@ class ProjectWindow(BaseWindow):
         # --------------------
 
         # Create the body layout and add it to the base
-        self.body_layout = QVBoxLayout()
+        self.body_layout = ProjectBody(self)
         self.base_layout.addLayout(self.body_layout)
 
         # Define the actions and menu bar
         self.define_actions()
         self.create_menubar()
-
-        self.create_layout()
 
         self.setWindowTitle(self.project.name)
 
@@ -101,115 +98,6 @@ class ProjectWindow(BaseWindow):
 
         edit_menu.addAction(self.action_preferences)
 
-    def create_layout(self) -> None:
-        """
-        This is called once when the window is created. It creates all the
-        widgets and layouts in the window.
-
-        Returns:
-            None
-        """
-
-        self.body_layout.setContentsMargins(50, 50, 50, 50)
-        self.fill_body_layout()
-
-    def fill_body_layout(self) -> None:
-        """
-        The body layout changes often as the project is manipulated. This
-        reloads the body layout every time it needs to be modified.
-        Initially, this sets the body layout to the standard empty project
-        layout.
-
-        Returns:
-            None
-        """
-
-        downloads = self.project.get_downloads()
-
-        # If there are no downloads, add the empty project frame to the body
-        if not downloads:
-            l = self.get_empty_project_layout()
-            if self.body_layout.itemAt(0):
-                self.body_layout.itemAt(0).deleteLater()
-            self.body_layout.addWidget(l)
-            return
-
-        # Otherwise, list the downloads in the body
-        l = self.get_downloads_layout(downloads)
-        if self.body_layout.itemAt(0):
-            self.body_layout.itemAt(0).deleteLater()
-        self.body_layout.addWidget(l)
-
-    def get_empty_project_layout(self) -> QFrame:
-        """
-        Get a frame widget containing the standard widgets for an empty
-        project: a header and a button to import Spotify downloads.
-
-        Returns:
-            A QFrame containing the widgets.
-        """
-
-        self.body_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        # Create frame and layout
-        frame = QFrame()
-        layout = QVBoxLayout()
-        frame.setLayout(layout)
-
-        # Set spacing and alignment
-        layout.setSpacing(10)
-
-        # Add text
-        head = Header('There\'s nothing here')
-        sub = Subtitle('Import a Spotify download to get started.')
-        layout.addWidget(head)
-        layout.addWidget(sub)
-
-        # Add open button
-        btn_open_layout = QVBoxLayout()
-        btn_open_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        btn_open = MainBtn('Import')
-        btn_open.clicked.connect(self.import_download_btn)
-        btn_open_layout.addWidget(btn_open)
-        layout.addLayout(btn_open_layout)
-
-        frame.setMaximumSize(frame.sizeHint())
-
-        return frame
-
-    def get_downloads_layout(self, downloads: List[SpotifyDownload]) -> QFrame:
-        """
-        Create a layout for the body of the project window that lists all the
-        Spotify downloads associated with the project.
-
-        Args:
-            downloads: The list of downloads.
-
-        Returns:
-            The layout embedded in a QFrame widget.
-        """
-
-        self.body_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-
-        # Create frame and layout
-        frame = QFrame()
-        layout = QVBoxLayout()
-        frame.setLayout(layout)
-
-        # Add text
-        head = Header('Spotify Downloads')
-        head.setContentsMargins(0, 0, 0, 10)
-        layout.addWidget(head)
-
-        # Add buttons for each Spotify download
-        for download in downloads:
-            layout.addWidget(
-                DownloadBtn(download, self.spotify_download_btn))
-
-        layout.setSpacing(10)
-
-        return frame
-
     def spotify_download_btn(self) -> None:
         """
         This is called whenever a user clicks one of the Spotify Download
@@ -237,7 +125,8 @@ class ProjectWindow(BaseWindow):
             None
         """
 
-        self.import_popup = ImportDownload(self.project)
+        self.import_popup = ImportDownload(self.project,
+                                           self.body_layout.refresh)
         self.import_popup.show()
 
     def close_program(self) -> None:
@@ -264,3 +153,200 @@ class ProjectWindow(BaseWindow):
 
         gui.HOME.show()
         self.close()
+
+
+class ProjectBody(QStackedLayout):
+    """
+    This layout contains the basic contents in the body of the project window.
+    It has multiple different views depending on what is being shown.
+    """
+
+    def __init__(self, window: ProjectWindow):
+        """
+        Create the ProjectBody layout by specifying the project window to which
+        it is attached.
+
+        Args:
+            window: The parent project window to which this is attached,
+                    and which contains the actual project data that is shown
+                    in the body.
+        """
+
+        super().__init__(window)
+
+        self.project = window.project
+        self.window = window
+
+        self.frm_empty_project = self.get_frm_empty_project()
+        self.addWidget(self.frm_empty_project)
+
+        self.lyt_downloads_list = QVBoxLayout()
+        self.addWidget(self.get_scroll_downloads_list())
+
+        self.setContentsMargins(50, 50, 50, 50)
+
+        self.refresh()
+
+    def refresh(self) -> None:
+        """
+        Set the contents of this frame according to what should be shown in
+        the project window (namely some Spotify Downloads or a button to
+        import them).
+
+        Returns:
+            None
+        """
+
+        print('Refreshing body frame...')
+
+        downloads = self.project.get_downloads()
+
+        # If there are no downloads, add the empty project layout to this frame
+        if not downloads:
+            self.setCurrentIndex(0)
+            self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            return
+
+        # Otherwise, list the downloads
+        self.update_downloads_list(downloads)
+        self.setCurrentIndex(1)
+        self.setAlignment(Qt.AlignmentFlag.AlignTop |
+                          Qt.AlignmentFlag.AlignHCenter)
+
+    def get_frm_empty_project(self) -> QFrame:
+        """
+        Create the frame that contains the standard widgets for an empty
+        project: a header and a button to import Spotify downloads. Put this
+        layout in a frame and return it.
+
+        This frame will be stored in self.frm_empty_project.
+
+        Returns:
+            A frame containing the layout.
+        """
+
+        # Create frame and layout
+        frame = QFrame()
+        layout = QVBoxLayout()
+        frame.setLayout(layout)
+
+        # Set spacing and alignment
+        layout.setSpacing(10)
+
+        # Add text
+        head = Header('There\'s nothing here')
+        sub = Subtitle('Import a Spotify download to get started.')
+        layout.addWidget(head)
+        layout.addWidget(sub)
+
+        # Add open button
+        btn_open_layout = QVBoxLayout()
+        btn_open_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        btn_open = MainBtn('Import')
+        btn_open.clicked.connect(self.window.import_download_btn)
+        btn_open_layout.addWidget(btn_open)
+        layout.addLayout(btn_open_layout)
+
+        frame.setMaximumSize(frame.sizeHint())
+
+        return frame
+
+    def get_scroll_downloads_list(self) -> QFrame:
+        """
+        Create the frame for the body of the project window that lists all
+        the Spotify downloads associated with the project. This contains the
+        layout with the download buttons, self.lyt_downloads_list.
+
+        This frame widget is then added to the second index in the main
+        stacked layout.
+
+        Returns:
+            A frame containing the layout and scrollable list.
+        """
+
+        # Create the main layout and frame
+        frame = QFrame()
+        layout = QVBoxLayout()
+        frame.setLayout(layout)
+
+        # Add the header
+        head = Header('Spotify Downloads')
+        head.setContentsMargins(0, 0, 0, 10)
+        layout.addWidget(head)
+
+        self.lyt_downloads_list.addStretch()
+
+        # Add the scrollable layout
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        widget = QWidget()
+        widget.setLayout(self.lyt_downloads_list)
+        scroll.setWidget(widget)
+        layout.addWidget(scroll)
+
+        # scroll.setVerticalScrollBarPolicy(
+        # Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+
+        frame.setMinimumWidth(600)
+
+        return frame
+
+    def update_downloads_list(self,
+                              downloads: List[SpotifyDownload]) -> None:
+        """
+        Update the downloads list layout to add each of the current downloads
+        as a separate button.
+
+        This updates self.lyt_downloads_list directly.
+
+        Args:
+            downloads: The list of downloads associated with this project.
+
+        Returns:
+            None
+        """
+
+        # Go through each of the old buttons and compare them with the new
+        # list of downloads
+
+        btn_index = 0
+        dwn_index = 0
+
+        remove_btn = lambda index: self.lyt_downloads_list.removeItem(
+            self.lyt_downloads_list.itemAt(index)
+        )
+        add_btn = lambda btn, dwn: self.lyt_downloads_list.insertWidget(
+            btn, DownloadBtn(downloads[dwn], self.window.spotify_download_btn)
+        )
+
+        while btn_index < self.lyt_downloads_list.count() - 1 or \
+                dwn_index < len(downloads):
+
+            # If there are more downloads and no buttons left, just add the
+            # downloads as new buttons
+            if btn_index == self.lyt_downloads_list.count() - 1:
+                add_btn(self.lyt_downloads_list.count() - 1, dwn_index)
+                btn_index += 1
+                dwn_index += 1
+                continue
+
+            # If there are more buttons and no downloads, remove them
+            if dwn_index == len(downloads):
+                remove_btn(btn_index)
+                continue
+
+            path = self.lyt_downloads_list.itemAt(
+                btn_index).widget().download.path
+
+            # If this button isn't in the downloads list anywhere, remove it.
+            if path not in [d.path for d in downloads]:
+                remove_btn(btn_index)
+                continue
+
+            # If this is a new download, add it here
+            if path != downloads[dwn_index].path:
+                add_btn(btn_index, dwn_index)
+            else:
+                btn_index += 1
+
+            dwn_index += 1

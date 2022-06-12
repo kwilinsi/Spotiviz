@@ -1,3 +1,4 @@
+from typing import Callable
 from datetime import datetime
 import os.path
 
@@ -9,6 +10,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QRegularExpressionValidator
 
 from spotiviz.projects.structure.project_class import Project
+from spotiviz.projects.structure.spotify_download import SpotifyDownload
 
 from spotiviz.gui.widgets.labels import Header, Error
 from spotiviz.gui.windows.standard_windows import CenteredWindow
@@ -23,18 +25,22 @@ class ImportDownload(CenteredWindow):
     Download was requested from Spotify.
     """
 
-    def __init__(self, project: Project):
+    def __init__(self,
+                 project: Project,
+                 import_fnc: Callable):
         """
         Create a new ImportDownload popup window. The project that the import
         will go to must be specified in order to add that download.
 
         Args:
             project: The project to which the Spotify download will be added.
+            import_fnc: The function to call when a Download is imported.
         """
 
         super().__init__(QVBoxLayout())
 
         self.project = project
+        self.import_fnc = import_fnc
 
         # Define variables that will be set later
         self.field_path = None
@@ -43,6 +49,8 @@ class ImportDownload(CenteredWindow):
         self.btn_import = None
         self.date_error = None
         self.date = None
+        self.path_error = None
+        self.name_error = None
 
         self.setWindowTitle(f'{self.project.name} - Import')
 
@@ -91,9 +99,11 @@ class ImportDownload(CenteredWindow):
         self.field_path.mousePressEvent = self.update_path
         path_browse_btn = QPushButton('Browse')
         path_browse_btn.clicked.connect(self.update_path)
+        self.path_error = Error('')
         fields.addWidget(prompt_path, 0, 0)
         path_layout = QHBoxLayout()
         path_layout.addWidget(self.field_path)
+        path_layout.addWidget(self.path_error)
         path_layout.addWidget(path_browse_btn)
         fields.addLayout(path_layout, 0, 1)
 
@@ -101,8 +111,12 @@ class ImportDownload(CenteredWindow):
         prompt_name = QLabel('Name:')
         # noinspection PyArgumentList
         self.field_name = QLineEdit(placeholderText='Enter download name')
+        name_layout = QHBoxLayout()
+        self.name_error = Error('')
+        name_layout.addWidget(self.field_name)
+        name_layout.addWidget(self.name_error)
         fields.addWidget(prompt_name, 1, 0)
-        fields.addWidget(self.field_name, 1, 1)
+        fields.addLayout(name_layout, 1, 1)
 
         # Add the prompt for the date
         prompt_date = QLabel('Date [optional]:')
@@ -163,13 +177,35 @@ class ImportDownload(CenteredWindow):
             None
         """
 
+        self.date_error.setText('')
+        self.name_error.setText('')
+        self.path_error.setText('')
+
+        if not self.field_name.text():
+            self.name_error.setText('Download name is required')
+            return
+
         try:
             self.validate_date()
         except ValueError:
             return
-        self.date_error.setText('')
 
-        print('Imported')
+        # Try creating a SpotifyDownload
+        try:
+            download = SpotifyDownload(self.project,
+                                       self.field_path.text(),
+                                       self.field_name.text(),
+                                       self.date,
+                                       True)
+        except NotADirectoryError:
+            self.path_error.setText('Must be a valid folder')
+            return
+        except ValueError:
+            self.path_error.setText('Not a valid Spotify download')
+            return
+
+        download.save_to_database()
+        self.import_fnc()
         self.close()
 
     def validate_date(self) -> None:
