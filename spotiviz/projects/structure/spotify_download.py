@@ -33,7 +33,8 @@ class SpotifyDownload:
                  name: str = None,
                  download_date: date = None,
                  download_id: int = -1,
-                 index: bool = False):
+                 index: bool = False,
+                 loaded: bool = False):
 
         """
         Initialize a SpotifyDownload instance by specifying the project to
@@ -58,6 +59,9 @@ class SpotifyDownload:
             index: Whether the contents of this download should be indexed
                    immediately. Set this to True if you don't know for sure
                    that the directory is actually a Spotify download.
+            loaded: Whether the contents of this download have already been
+                    loaded into the SQLite database. If this true, index should
+                    almost certainly be marked false.
 
         Raises:
             NotADirectoryError: If the path does not point to a valid directory.
@@ -76,6 +80,7 @@ class SpotifyDownload:
         self.date: date = download_date
         self.name: str = os.path.basename(path) if name is None else name
         self.files: Dict[str, Tuple[ft.FileType, gf.GenericFile]] = {}
+        self.loaded: bool = loaded
 
         # Set a temporary id for this download
         self.id: int = download_id
@@ -95,6 +100,34 @@ class SpotifyDownload:
 
         if index:
             LOG.debug(f'  Indexed {len(self.files)} files')
+
+    @classmethod
+    def from_sql(cls,
+                 project: pc.Project,
+                 download_record: Downloads) -> SpotifyDownload:
+        """
+        Create a SpotifyDownload instance from an instance of the
+        SQLAlchemy-based Downloads class, which represents a record in the
+        Downloads table in the project database.
+
+        For more information, see project_class.Project.from_sql().
+
+        Args:
+            project: To the project to which this download belongs.
+            download_record: A record in the SQL database form the Downloads
+                             table.
+
+        Returns:
+            A new SpotifyDownload instance.
+        """
+
+        return cls(project,
+                   download_record.path,
+                   download_record.name,
+                   download_record.download_date,
+                   download_record.id,
+                   index=False,
+                   loaded=False)
 
     def __str__(self) -> str:
         """
@@ -195,21 +228,10 @@ class SpotifyDownload:
 
     def save_to_database(self) -> None:
         """
-        Add information pertaining to this download to the database for the
-        parent project. This includes:
-
-        1. Adding the data from this SpotifyDownload to the SQLite
-        Downloads table for the project.
-
-        2. Adding each of the streaming history files to the StreamingHistories
-        table.
-
-        3. Adding each of the streams (an individual listen to a song at a
-        specific time) to the StreamingHistoryRaw table.
-
-        Important: This must be called AFTER the download directory is
-        indexed via self.index(). This is performed automatically in the
-        __init__ method, provided that the index parameter is True.
+        Add this Spotify download to the Downloads table in the SQLite
+        database for the project. Note that this does NOT add the contents of
+        the files in the download to the database. For that, you must call
+        self.load().
 
         Returns:
             None
@@ -224,6 +246,32 @@ class SpotifyDownload:
             self.id = d.id
 
         LOG.debug(f'Added to project {self} with id {self.id}')
+
+    def load(self) -> None:
+        """
+        This function saves the contents of the files in this Spotify
+        download to the SQLite database for the project. Currently, it performs
+        the following actions.
+
+        1. Add each of the streaming history files to the StreamingHistories
+        table.
+
+        2. Add each of the streams (an individual listen to a song at a
+        specific time) to the StreamingHistoryRaw table.
+
+        3. Call self.__set_download_date() to set the download date for this
+           project based on the streaming history, if it was not already
+           provided by the user.
+
+        4. Update self.loaded to True.
+
+        Important: This must be called AFTER the download directory is
+        indexed via self.index(). This is performed automatically in the
+        __init__ method, provided that the index parameter is True.
+
+        Returns:
+            None
+        """
 
         # Add each StreamingHistory file (and its contents) to the database
         for f in self.__get_streaming_histories():
@@ -244,6 +292,13 @@ class SpotifyDownload:
 
         # Validate/set the download date
         self.__set_download_date()
+
+        self.loaded = True
+        with self.project.open_session() as session:
+            stmt = select(Downloads).where(Downloads.id == self.id)
+            me = session.scalars(stmt).one()
+            me.loaded = True
+            session.commit()
 
     def __set_download_date(self) -> None:
         """

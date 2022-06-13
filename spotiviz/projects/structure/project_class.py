@@ -43,9 +43,9 @@ class Project:
         self.config = ProjectConfig(self)
 
     @classmethod
-    def from_sql(cls, projects_record: Projects):
+    def from_sql(cls, projects_record: Projects) -> Project:
         """
-        Generate a Project instance from an instance of the SQLAlchemy-based
+        Create a Project instance from an instance of the SQLAlchemy-based
         Projects class, which represents a record in the Projects table in
         the global program database.
 
@@ -61,7 +61,7 @@ class Project:
                              table, given as an instance of the Projects class.
 
         Returns:
-            A new Project instance for the project.
+            A new Project instance.
         """
 
         return cls(projects_record.name,
@@ -181,8 +181,8 @@ class Project:
                      download_date: date = None) -> None:
         """
         Create a new Download instance pointing to a Spotify download,
-        and assign it to this project. Save its contents to the project
-        database.
+        and assign it to this project. Save it to the project database and call
+        .load() to load it.
 
         Args:
             path: The path to the directory with the Spotify download.
@@ -197,6 +197,7 @@ class Project:
 
         d = sd.SpotifyDownload(self, path, name, download_date, index=True)
         d.save_to_database()
+        d.load()
 
     def get_downloads(self) -> List[sd.SpotifyDownload]:
         """

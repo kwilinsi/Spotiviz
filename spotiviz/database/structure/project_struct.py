@@ -51,6 +51,7 @@ class Downloads(Base, ReprModel):
     name: Column = Column(TEXT, nullable=False)
     start_time: Column = Column(DATETIME)
     download_date: Column = Column(DATE)
+    loaded: Column = Column(BOOLEAN)
 
     streaming_histories = relationship('StreamingHistories',
                                        back_populates='download',

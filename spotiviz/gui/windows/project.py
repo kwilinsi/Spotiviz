@@ -3,10 +3,10 @@ from typing import List
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
-    QVBoxLayout, QStackedLayout, QFrame, QScrollArea, QWidget, QSizePolicy
+    QVBoxLayout, QHBoxLayout, QStackedLayout, QScrollArea, QWidget, QSizePolicy
 )
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.exc import NoResultFound
 
 from spotiviz.database.structure.project_struct import Downloads
@@ -16,7 +16,7 @@ from spotiviz.projects.structure.spotify_download import SpotifyDownload
 
 from spotiviz.gui import gui
 from spotiviz.gui.widgets.download_button import DownloadBtn
-from spotiviz.gui.widgets.generic_buttons import MainBtn
+from spotiviz.gui.widgets.generic_buttons import MainBtn, PrimaryBtn
 from spotiviz.gui.widgets.labels import Header, Subtitle
 from spotiviz.gui.widgets.not_implemented import this_is_not_yet_implemented
 from spotiviz.gui.windows.download_info import DownloadInfo
@@ -70,7 +70,7 @@ class ProjectWindow(BaseWindow):
 
         self.action_import = QAction('&Import', self)
         self.action_import.setToolTip('Import a Spotify Download')
-        self.action_import.triggered.connect(self.import_download_btn)
+        self.action_import.triggered.connect(self.btn_import_download)
 
         self.action_close = QAction('&Close', self)
         self.action_close.triggered.connect(self.close_program)
@@ -104,7 +104,7 @@ class ProjectWindow(BaseWindow):
 
         edit_menu.addAction(self.action_preferences)
 
-    def spotify_download_btn(self) -> None:
+    def btn_spotify_download(self) -> None:
         """
         This is called whenever a user clicks one of the Spotify Download
         buttons in the project body. It opens a window where they can see
@@ -117,23 +117,10 @@ class ProjectWindow(BaseWindow):
 
         sender_btn: DownloadBtn = self.sender()
         dialog = DownloadInfo(sender_btn.download,
-                              self.delete_download_btn,
+                              self.btn_delete_download,
                               sender_btn,
                               self)
         dialog.exec()
-
-    def import_download_btn(self) -> None:
-        """
-        This is called whenever the user requests to import a Spotify
-        download. It opens the import download popup window.
-
-        Returns:
-            None
-        """
-
-        self.import_popup = ImportDownload(self.project,
-                                           self.body_layout.refresh)
-        self.import_popup.show()
 
     def close_program(self) -> None:
         """
@@ -160,7 +147,35 @@ class ProjectWindow(BaseWindow):
         gui.HOME.show()
         self.close()
 
-    def delete_download_btn(self) -> None:
+    def btn_import_download(self) -> None:
+        """
+        This is called whenever the user requests to import a Spotify
+        download. It opens the import download popup window.
+
+        Returns:
+            None
+        """
+
+        self.import_popup = ImportDownload(self.project,
+                                           self.btn_add_download)
+        self.import_popup.show()
+
+    def btn_add_download(self) -> None:
+        """
+        This is called when the user clicks "Import" button in an
+        ImportDownload window to add a new Spotify download to the project.
+        It triggers a refresh of the downloads list and re-enables the 'Load'
+        button (if it was disabled) to allow loading the contents of the new
+        download.
+
+        Returns:
+            None
+        """
+
+        self.body_layout.refresh()
+        self.body_layout.btn_load.setEnabled(True)
+
+    def btn_delete_download(self) -> None:
         """
         This function is called whenever a user clicks the "Delete" button in
         the DownloadInfo popup dialog for a Spotify download. It removes the
@@ -182,6 +197,28 @@ class ProjectWindow(BaseWindow):
                 print('No result found')
 
         sender.download_btn.setParent(None)
+        self.body_layout.refresh()
+
+    def btn_load_downloads(self) -> None:
+        """
+        This function is called when the user clicks the "Load" button
+        beneath the list of downloads. It loads the file contents of each of
+        those downloads in to the project database file. Once every download
+        is loaded, the button is disabled.
+
+        Returns:
+            None
+        """
+
+        self.body_layout.btn_load.setDisabled(True)
+
+        # Find all non-loaded downloads and load them
+        with self.project.open_session() as session:
+            stmt = select(Downloads).where(Downloads.loaded == False)
+            result = session.scalars(stmt)
+            for r in result:
+                SpotifyDownload.from_sql(self.project, r).load()
+
         self.body_layout.refresh()
 
 
@@ -206,6 +243,9 @@ class ProjectBody(QStackedLayout):
 
         self.project = window.project
         self.window = window
+
+        # Define data members to be initialized later
+        self.btn_load = None
 
         self.empty_project = self.get_empty_project()
         self.addWidget(self.empty_project)
@@ -270,7 +310,7 @@ class ProjectBody(QStackedLayout):
         btn_open_layout = QVBoxLayout()
         btn_open_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         btn_open = MainBtn('Import')
-        btn_open.clicked.connect(self.window.import_download_btn)
+        btn_open.clicked.connect(self.window.btn_import_download)
         btn_open_layout.addWidget(btn_open)
         layout.addLayout(btn_open_layout)
 
@@ -286,7 +326,7 @@ class ProjectBody(QStackedLayout):
 
         return enclosing_widget
 
-    def get_scroll_downloads_list(self) -> QFrame:
+    def get_scroll_downloads_list(self) -> QWidget:
         """
         Create the frame for the body of the project window that lists all
         the Spotify downloads associated with the project. This contains the
@@ -320,6 +360,29 @@ class ProjectBody(QStackedLayout):
         scroll.setWidget(list_widget)
         layout.addWidget(scroll)
 
+        # Add the 'Load' and 'Process' buttons
+        btn_lyt = QHBoxLayout()
+        self.btn_load = PrimaryBtn('Load')
+        self.btn_load.clicked.connect(self.window.btn_load_downloads)
+        btn_process = PrimaryBtn('Process')
+        btn_process.clicked.connect(lambda: this_is_not_yet_implemented(
+            self.window))
+        btn_lyt.addWidget(self.btn_load)
+        btn_lyt.addWidget(btn_process)
+        btn_lyt.setAlignment(Qt.AlignmentFlag.AlignRight)
+        btn_lyt.setContentsMargins(0, 10, 10, 0)
+        layout.addLayout(btn_lyt)
+
+        # Determine if there's any un-loaded projects. If there aren't any,
+        # disable the 'Load' button
+        with self.project.open_session() as session:
+            stmt = select(func.count(Downloads.loaded)).where(
+                Downloads.loaded == False)
+            count = session.scalars(stmt).one()
+            if not count:
+                self.btn_load.setDisabled(True)
+
+        # Set sizing
         widget.setMinimumWidth(600)
         widget.setMaximumWidth(700)
         widget.setMinimumHeight(250)
@@ -359,7 +422,7 @@ class ProjectBody(QStackedLayout):
             self.lyt_downloads_list.itemAt(index)
         )
         add_btn = lambda btn, dwn: self.lyt_downloads_list.insertWidget(
-            btn, DownloadBtn(downloads[dwn], self.window.spotify_download_btn)
+            btn, DownloadBtn(downloads[dwn], self.window.btn_spotify_download)
         )
 
         while btn_index < self.lyt_downloads_list.count() - 1 or \
