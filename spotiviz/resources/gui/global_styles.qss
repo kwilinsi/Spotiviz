@@ -106,3 +106,7 @@ DownloadBtn {
 DownloadBtn:hover:!pressed {
     background-color: #f2f5fa;
 }
+
+QScrollArea {
+    border-radius: 0px;
+}
