@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QStackedLayout, QScrollArea, QWidget, QSizePolicy
 )
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete
 from sqlalchemy.exc import NoResultFound
 
 from spotiviz.database.structure.project_struct import Downloads
@@ -45,6 +45,8 @@ class ProjectWindow(BaseWindow):
         self.action_close = None
         self.action_close_project = None
         self.action_preferences = None
+        self.action_clear_downloads = None
+        self.action_delete_project = None
 
         # --------------------
 
@@ -78,6 +80,12 @@ class ProjectWindow(BaseWindow):
         self.action_close_project = QAction('Close &Project', self)
         self.action_close_project.triggered.connect(self.close_project)
 
+        self.action_clear_downloads = QAction('Clear all downloads', self)
+        self.action_clear_downloads.triggered.connect(self.btn_clear_downloads)
+
+        self.action_delete_project = QAction('Delete project', self)
+        self.action_delete_project.triggered.connect(self.btn_delete_project)
+
         self.action_preferences = QAction('&Preferences', self)
         self.action_preferences.triggered.connect(
             lambda: this_is_not_yet_implemented(self))
@@ -99,6 +107,11 @@ class ProjectWindow(BaseWindow):
         file_menu.addSeparator()
         file_menu.addAction(self.action_close)
         file_menu.addAction(self.action_close_project)
+        file_menu.addSeparator()
+
+        project_submenu = file_menu.addMenu('Project')
+        project_submenu.addAction(self.action_clear_downloads)
+        project_submenu.addAction(self.action_delete_project)
 
         edit_menu = menu.addMenu('&Edit')
 
@@ -144,6 +157,7 @@ class ProjectWindow(BaseWindow):
             None
         """
 
+        gui.load_homescreen()
         gui.HOME.show()
         self.close()
 
@@ -221,6 +235,37 @@ class ProjectWindow(BaseWindow):
 
         self.body_layout.refresh()
 
+    def btn_clear_downloads(self) -> None:
+        """
+        This function is called when the user chooses the 'Clear all
+        downloads' option in the menubar. It removes all the Spotify
+        downloads associated with the project and updates the project window
+        accordingly.
+
+        Returns:
+            None
+        """
+
+        with self.project.open_session() as session:
+            session.execute(delete(Downloads))
+            session.commit()
+
+        self.body_layout.refresh()
+
+    def btn_delete_project(self) -> None:
+        """
+        This function is called when the user chooses the 'Delete project'
+        option in the menubar. It deletes the project's SQLite database and
+        removes this project from the program database. Then it calls
+        self.close_project() to return to the homescreen.
+
+        Returns:
+            None
+        """
+
+        self.project.delete()
+        self.close_project()
+
 
 class ProjectBody(QStackedLayout):
     """
@@ -266,8 +311,6 @@ class ProjectBody(QStackedLayout):
         Returns:
             None
         """
-
-        print('Refreshing body frame...')
 
         downloads = self.project.get_downloads()
 

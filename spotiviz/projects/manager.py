@@ -47,6 +47,7 @@ def delete_all_projects() -> None:
     LOG.debug('Clearing Projects table')
     with db.session() as session:
         session.execute(delete(Projects))
+        session.commit()
 
 
 def create_project(name: str, database_path: str = None) -> pc.Project:

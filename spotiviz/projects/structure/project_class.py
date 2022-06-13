@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import os
 from datetime import date, datetime
 from typing import Any
 
 import sqlalchemy as sa
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -14,6 +16,8 @@ from spotiviz.database.structure.project_struct import Downloads
 from spotiviz.projects.structure import spotify_download as sd
 from spotiviz.projects.structure.config.project_config import ProjectConfig
 from spotiviz.projects.structure.config.properties import Config
+
+from spotiviz.utils.log import LOG
 
 
 class Project:
@@ -261,3 +265,29 @@ class Project:
         """
 
         return self.config.get_force_reload(config)
+
+    def delete(self) -> None:
+        """
+        Delete this project. This means deleting the SQLite database and
+        removing the entry for this project from the global program database.
+
+        Returns:
+            None
+        """
+
+        try:
+            with db.session() as session:
+                stmt = select(Projects).where(Projects.name == self.name)
+                result = session.scalars(stmt)
+                for r in result:
+                    session.delete(r)
+                session.commit()
+        except SQLAlchemyError as e:
+            LOG.error(e)
+            print('Failed to remove project from program database')
+
+        try:
+            os.remove(self.path)
+        except OSError as e:
+            LOG.error(e)
+            print('Failed to remove project database')

@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QApplication
 from spotiviz.database import db
 
 from spotiviz.gui import constants as const
-from spotiviz.gui.windows import homecreen
+from spotiviz.gui.windows.homecreen import HomeScreen
 from spotiviz.utils import resources as resc
 
 APP = None
@@ -25,7 +25,7 @@ def start() -> None:
         None
     """
 
-    global APP, HOME
+    global APP
 
     db.initialize()
 
@@ -37,7 +37,7 @@ def start() -> None:
     # Load the QSS style sheet
     APP.setStyleSheet(resc.read(resc.get_gui_resource(const.QSS_GLOBAL_STYLES)))
 
-    HOME = homecreen.HomeScreen()
+    load_homescreen()
     HOME.show()
 
     APP.exec()
@@ -57,3 +57,15 @@ def load_fonts() -> None:
     for root, _, files in os.walk(fonts_dir):
         for f in files:
             QFontDatabase.addApplicationFont(os.path.join(root, f))
+
+def load_homescreen() -> None:
+    """
+    Create the homescreen window.
+
+    Returns:
+        None
+    """
+
+    global HOME
+
+    HOME = HomeScreen()
