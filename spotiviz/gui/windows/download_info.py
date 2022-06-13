@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (
 
 from spotiviz.projects.structure.spotify_download import SpotifyDownload
 
+from spotiviz.gui.widgets.download_button import DownloadBtn
 from spotiviz.gui.widgets.generic_buttons import DeleteBtn, SecondaryBtn
 
 
@@ -13,6 +14,7 @@ class DownloadInfo(QDialog):
     def __init__(self,
                  download: SpotifyDownload,
                  delete_fnc: Callable,
+                 download_btn: DownloadBtn,
                  parent):
         """
         Create a new DownloadInfo dialog for a specific Spotify Download.
@@ -25,7 +27,9 @@ class DownloadInfo(QDialog):
 
         super().__init__(parent)
 
+        self.download = download
         self.delete_fnc = delete_fnc
+        self.download_btn = download_btn
 
         self.setWindowTitle(download.name)
 

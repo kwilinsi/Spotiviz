@@ -195,7 +195,7 @@ class Project:
             None
         """
 
-        d = sd.SpotifyDownload(self, path, name, download_date, True)
+        d = sd.SpotifyDownload(self, path, name, download_date, index=True)
         d.save_to_database()
 
     def get_downloads(self) -> List[sd.SpotifyDownload]:
@@ -212,7 +212,12 @@ class Project:
 
         with self.open_session() as session:
             result = session.scalars(select(Downloads))
-            return [sd.SpotifyDownload(self, r.path, r.name, r.download_date)
+            return [sd.SpotifyDownload(self,
+                                       r.path,
+                                       r.name,
+                                       download_date=r.download_date,
+                                       download_id=r.id,
+                                       index=False)
                     for r in result]
 
     def get_config(self, config: Config) -> Any:

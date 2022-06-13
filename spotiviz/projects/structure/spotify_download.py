@@ -32,6 +32,7 @@ class SpotifyDownload:
                  path: str,
                  name: str = None,
                  download_date: date = None,
+                 download_id: int = -1,
                  index: bool = False):
 
         """
@@ -74,13 +75,14 @@ class SpotifyDownload:
         self.project: pc.Project = project
         self.date: date = download_date
         self.name: str = os.path.basename(path) if name is None else name
+        self.files: Dict[str, Tuple[ft.FileType, gf.GenericFile]] = {}
 
         # Set a temporary id for this download
-        self.id: int = -1
+        self.id: int = download_id
 
         # Index the files in the download for later
         if index:
-            self.__index()
+            self.index()
 
             # Validate the directory contents to make sure it's a Spotify
             # download
@@ -105,7 +107,7 @@ class SpotifyDownload:
 
         return f'{self.project} download \'{self.path}\''
 
-    def __index(self) -> None:
+    def index(self) -> None:
         """
         Go through all the files in the path associated with this Spotify
         Download. Add each file to a dictionary `self.files`, where the file
@@ -115,8 +117,6 @@ class SpotifyDownload:
         Returns:
             None
         """
-
-        self.files: Dict[str, Tuple[ft.FileType, gf.GenericFile]] = {}
 
         for file in os.listdir(self.path):
             t = ft.getFileType(file)
@@ -206,6 +206,10 @@ class SpotifyDownload:
 
         3. Adding each of the streams (an individual listen to a song at a
         specific time) to the StreamingHistoryRaw table.
+
+        Important: This must be called AFTER the download directory is
+        indexed via self.index(). This is performed automatically in the
+        __init__ method, provided that the index parameter is True.
 
         Returns:
             None

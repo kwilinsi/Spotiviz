@@ -6,6 +6,14 @@ from PyQt6.QtWidgets import (
     QVBoxLayout, QStackedLayout, QFrame, QScrollArea, QWidget, QSizePolicy
 )
 
+from sqlalchemy import select
+from sqlalchemy.exc import NoResultFound
+
+from spotiviz.database.structure.project_struct import Downloads
+
+from spotiviz.projects.structure.project_class import Project
+from spotiviz.projects.structure.spotify_download import SpotifyDownload
+
 from spotiviz.gui import gui
 from spotiviz.gui.widgets.download_button import DownloadBtn
 from spotiviz.gui.widgets.generic_buttons import MainBtn
@@ -14,8 +22,6 @@ from spotiviz.gui.widgets.not_implemented import this_is_not_yet_implemented
 from spotiviz.gui.windows.download_info import DownloadInfo
 from spotiviz.gui.windows.import_download import ImportDownload
 from spotiviz.gui.windows.standard_windows import BaseWindow
-from spotiviz.projects.structure.project_class import Project
-from spotiviz.projects.structure.spotify_download import SpotifyDownload
 
 
 class ProjectWindow(BaseWindow):
@@ -109,10 +115,10 @@ class ProjectWindow(BaseWindow):
             None
         """
 
-        print('Clicked spotify download button')
-        sender_btn = self.sender()
+        sender_btn: DownloadBtn = self.sender()
         dialog = DownloadInfo(sender_btn.download,
-                              lambda: this_is_not_yet_implemented(self),
+                              self.delete_download_btn,
+                              sender_btn,
                               self)
         dialog.exec()
 
@@ -153,6 +159,30 @@ class ProjectWindow(BaseWindow):
 
         gui.HOME.show()
         self.close()
+
+    def delete_download_btn(self) -> None:
+        """
+        This function is called whenever a user clicks the "Delete" button in
+        the DownloadInfo popup dialog for a Spotify download. It removes the
+        download and all of its data from the SQLite database and removes the
+        download's button in the project window.
+
+        Returns:
+            None
+        """
+
+        sender: DownloadInfo = self.sender().parent()
+        download: SpotifyDownload = sender.download
+        with self.project.open_session() as session:
+            try:
+                stmt = select(Downloads).where(Downloads.id == download.id)
+                session.delete(session.scalars(stmt).one())
+                session.commit()
+            except NoResultFound:
+                print('No result found')
+
+        sender.download_btn.setParent(None)
+        self.body_layout.refresh()
 
 
 class ProjectBody(QStackedLayout):
@@ -244,7 +274,7 @@ class ProjectBody(QStackedLayout):
         btn_open_layout.addWidget(btn_open)
         layout.addLayout(btn_open_layout)
 
-        widget.setMaximumSize(widget.sizeHint())
+        widget.setFixedSize(widget.sizeHint())
 
         # Now enclose the widget in ANOTHER layout inside another frame. This
         # is necessary to be able to center it within self, a StackedLayout.
@@ -270,7 +300,7 @@ class ProjectBody(QStackedLayout):
         """
 
         # Create the main layout and frame
-        widget = QFrame()
+        widget = QWidget()
         layout = QVBoxLayout()
         widget.setLayout(layout)
 
@@ -292,6 +322,7 @@ class ProjectBody(QStackedLayout):
 
         widget.setMinimumWidth(600)
         widget.setMaximumWidth(700)
+        widget.setMinimumHeight(250)
 
         # Now enclose the widget in ANOTHER layout inside another frame. This
         # is necessary to be able to center it within self, a StackedLayout.

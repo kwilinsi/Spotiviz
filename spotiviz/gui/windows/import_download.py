@@ -196,7 +196,7 @@ class ImportDownload(CenteredWindow):
                                        self.field_path.text(),
                                        self.field_name.text(),
                                        self.date,
-                                       True)
+                                       index=True)
         except NotADirectoryError:
             self.path_error.setText('Must be a valid folder')
             return
