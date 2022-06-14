@@ -22,6 +22,7 @@ from spotiviz.gui.widgets.not_implemented import this_is_not_yet_implemented
 from spotiviz.gui.windows.download_info import DownloadInfo
 from spotiviz.gui.windows.import_download import ImportDownload
 from spotiviz.gui.windows.standard_windows import BaseWindow
+from spotiviz.gui.windows.preferences import Preferences
 
 
 class ProjectWindow(BaseWindow):
@@ -74,10 +75,10 @@ class ProjectWindow(BaseWindow):
         self.action_import.setToolTip('Import a Spotify Download')
         self.action_import.triggered.connect(self.btn_import_download)
 
-        self.action_close = QAction('&Close', self)
+        self.action_close = QAction('C&lose', self)
         self.action_close.triggered.connect(self.close_program)
 
-        self.action_close_project = QAction('Close &Project', self)
+        self.action_close_project = QAction('&Close Project', self)
         self.action_close_project.triggered.connect(self.close_project)
 
         self.action_clear_downloads = QAction('Clear all downloads', self)
@@ -87,8 +88,7 @@ class ProjectWindow(BaseWindow):
         self.action_delete_project.triggered.connect(self.btn_delete_project)
 
         self.action_preferences = QAction('&Preferences', self)
-        self.action_preferences.triggered.connect(
-            lambda: this_is_not_yet_implemented(self))
+        self.action_preferences.triggered.connect(self.btn_open_preferences)
 
     def create_menubar(self) -> None:
         """
@@ -109,7 +109,7 @@ class ProjectWindow(BaseWindow):
         file_menu.addAction(self.action_close_project)
         file_menu.addSeparator()
 
-        project_submenu = file_menu.addMenu('Project')
+        project_submenu = file_menu.addMenu('&Project')
         project_submenu.addAction(self.action_clear_downloads)
         project_submenu.addAction(self.action_delete_project)
 
@@ -191,7 +191,7 @@ class ProjectWindow(BaseWindow):
 
     def btn_delete_download(self) -> None:
         """
-        This function is called whenever a user clicks the "Delete" button in
+        This function is called whenever a user clicks the 'Delete' button in
         the DownloadInfo popup dialog for a Spotify download. It removes the
         download and all of its data from the SQLite database and removes the
         download's button in the project window.
@@ -215,7 +215,7 @@ class ProjectWindow(BaseWindow):
 
     def btn_load_downloads(self) -> None:
         """
-        This function is called when the user clicks the "Load" button
+        This function is called when the user clicks the 'Load' button
         beneath the list of downloads. It loads the file contents of each of
         those downloads in to the project database file. Once every download
         is loaded, the button is disabled.
@@ -265,6 +265,18 @@ class ProjectWindow(BaseWindow):
 
         self.project.delete()
         self.close_project()
+
+    def btn_open_preferences(self) -> None:
+        """
+        This function is called when the user chooses the 'Preferences' open
+        from the edit menu. It opens the preferences dialog for this project.
+
+        Returns:
+            None
+        """
+
+        dlg = Preferences(self, self.project)
+        dlg.exec()
 
 
 class ProjectBody(QStackedLayout):

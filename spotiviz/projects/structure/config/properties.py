@@ -1,4 +1,4 @@
-import enum
+from enum import Enum
 from typing import Any
 
 
@@ -14,7 +14,7 @@ class _Property:
         self.default = default
 
 
-class Config(enum.Enum):
+class Config(Enum):
     """
     This is a list of all the configuration settings that belong to each
     project. Each of these is listed in the project's Config table in the
