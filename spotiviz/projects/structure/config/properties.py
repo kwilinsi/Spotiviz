@@ -81,7 +81,7 @@ class Config(Enum):
         'never be considered a skip. If this threshold is met, then the '
         'MIN_NON_SKIP_FREQUENCY_PERCENT_THRESHOLD does NOT need to be met for '
         'the song to be marked non-skip.',
-        float,
+        int,
         6
     )
 

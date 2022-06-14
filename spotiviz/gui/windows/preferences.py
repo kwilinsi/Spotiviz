@@ -35,6 +35,8 @@ class Preferences(QDialog):
 
         self.project = project
 
+        self.setWindowTitle('Preferences')
+
         # Create basic tab layout
         self.tabs = QTabWidget()
         self.tabs.setTabPosition(QTabWidget.TabPosition.West)
