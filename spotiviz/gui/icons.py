@@ -12,6 +12,8 @@ class Icons(Enum):
 
     INFO = 'info.png'
 
+    CANCEL = 'cancel.png'
+
     def path(self) -> str:
         """
         Get the complete path to this icon file.

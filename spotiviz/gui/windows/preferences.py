@@ -4,7 +4,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QDialog, QTabWidget, QVBoxLayout, QFormLayout, QLabel, QHBoxLayout,
     QLineEdit, QPushButton, QDialogButtonBox, QMainWindow, QWidget,
-    QLayout, QScrollArea, QMessageBox
+    QLayout, QScrollArea, QMessageBox, QGridLayout, QListWidget,
+    QListWidgetItem, QAbstractItemView
 )
 
 from sqlalchemy import update
@@ -15,7 +16,7 @@ from spotiviz.projects.structure.project_class import Project
 from spotiviz.projects.structure.config.properties import Config
 
 from spotiviz.gui.widgets.labels import Header
-from spotiviz.gui.widgets.generic_buttons import InfoBtn
+from spotiviz.gui.widgets.generic_buttons import InfoBtn, CancelBtn
 
 
 class Preferences(QDialog):
@@ -113,8 +114,8 @@ class Preferences(QDialog):
         layout.addWidget(head)
 
         # Add contents
-        lbl = QLabel('This is not yet implemented.')
-        layout.addWidget(lbl)
+        aliases = AliasList()
+        layout.addWidget(aliases)
 
         return layout
 
@@ -141,8 +142,8 @@ class Preferences(QDialog):
                     for field in changed:
                         session.execute(
                             update(ConfigTbl).
-                                where(ConfigTbl.key == field.config.name).
-                                values(value=field.current_value)
+                            where(ConfigTbl.key == field.config.name).
+                            values(value=field.current_value)
                         )
                         field.on_apply()
                     session.commit()
@@ -249,6 +250,102 @@ class ConfigField(QHBoxLayout):
 
         self.initial_value = self.current_value
         self.has_changed = False
+
+
+class AliasList(QListWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+
+        self.new_entry(True)
+        self.new_entry(False)
+        self.new_entry(True)
+
+    def new_entry(self, include_track: bool = False) -> None:
+        """
+        Add a new item to this list.
+
+        Args:
+            include_track: True iff a field for the track name should be
+                           included.
+
+        Returns:
+            None
+        """
+
+        entry = AliasEntry(include_track)
+        item = QListWidgetItem(self)
+        item.setSizeHint(entry.sizeHint())
+        self.addItem(item)
+        self.setItemWidget(item, entry)
+
+
+
+class AliasEntry(QWidget):
+    def __init__(self, include_track: bool):
+        super().__init__()
+
+        self.include_track = include_track
+
+        # Create layouts
+        lyt = QHBoxLayout()
+        lyt_from = QHBoxLayout()
+        lyt_to = QHBoxLayout()
+        lyt.addLayout(lyt_from)
+        lyt.addLayout(lyt_to)
+
+        field_from_artist = QLineEdit()
+        field_from_artist.setPlaceholderText('Artist')
+        field_to_artist = QLineEdit()
+        field_to_artist.setPlaceholderText('Artist')
+
+        lyt_from.addWidget(QLabel('Change'))
+        lyt_to.addWidget(QLabel('to'))
+
+        lyt_from.addWidget(field_from_artist)
+        lyt_to.addWidget(field_to_artist)
+
+        if self.include_track:
+            field_from_track = QLineEdit()
+            field_from_track.setPlaceholderText('Track')
+            field_to_track = QLineEdit()
+            field_to_track.setPlaceholderText('Track')
+
+            lyt_from.addWidget(field_from_track)
+            lyt_to.addWidget(field_to_track)
+
+        # Add button
+        btn = CancelBtn(self.remove_row)
+        lyt.addWidget(btn)
+
+        self.setLayout(lyt)
+
+    def remove_row(self) -> None:
+        print('remove row')
+
+
+def delete_items_of_layout(layout: QLayout) -> None:
+    """
+    Delete all the widgets in a layout. This was taken from
+    https://stackoverflow.com/questions/37564728/pyqt-how-to-remove-a-layout
+    -from-a-layout
+
+    Args:
+        layout: The layout whose contents will be deleted.
+
+    Returns:
+        None
+    """
+
+    if layout:
+        while layout.count():
+            item = layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.setParent(None)
+            else:
+                delete_items_of_layout(item.layout())
 
 
 def make_scrollable(layout: QLayout) -> QScrollArea:

@@ -53,3 +53,22 @@ class InfoBtn(QPushButton):
 
         self.setIcon(QIcon(Icons.INFO.path()))
         self.clicked.connect(click_fcn)
+
+
+class CancelBtn(QPushButton):
+    """
+    The cancel button is a small button with a cancel icon.
+    """
+
+    def __init__(self, click_fcn: Callable):
+        """
+        Create a new cancel button.
+
+        Args:
+            click_fcn: The function to execute when the button is clicked.
+        """
+
+        super().__init__()
+
+        self.setIcon(QIcon(Icons.CANCEL.path()))
+        self.clicked.connect(click_fcn)
