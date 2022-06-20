@@ -1,6 +1,6 @@
 from typing import List
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtWidgets import (
     QDialog, QTabWidget, QVBoxLayout, QFormLayout, QLabel, QHBoxLayout,
     QLineEdit, QPushButton, QDialogButtonBox, QMainWindow, QWidget,
@@ -68,7 +68,7 @@ class Preferences(QDialog):
         layout.addWidget(self.buttons)
 
         # Set initial width wider to accommodate the aliases tab
-        self.resize(self.aliases.sizeHint().width(),
+        self.resize(self.aliases.sizeHint().width() + 75,
                     self.sizeHint().height())
 
     def _get_config_tab(self) -> QWidget:
@@ -298,6 +298,19 @@ class AliasList(QListWidget):
         self.setItemWidget(item, entry)
 
         self.scrollToBottom()
+
+    def sizeHint(self) -> QSize:
+        """
+        Override sizeHint to hint proper width for alias entries. This is
+        based on https://stackoverflow.com/questions/6337589/qlistwidget
+        -adjust-size-to-content
+
+        Returns:
+            The size hint.
+        """
+
+        return QSize(self.sizeHintForColumn(0),
+                     super().sizeHint().height())
 
 
 class AliasEntry(QWidget):
