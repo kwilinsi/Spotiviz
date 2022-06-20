@@ -54,7 +54,7 @@ class Preferences(QDialog):
         # Add tabs
         self.config = make_scrollable(self._get_config_tab())
         self.tabs.addTab(self.config, 'Config')
-        self.aliases = make_scrollable(self._get_aliases_tab())
+        self.aliases = self._get_aliases_tab()
         self.tabs.addTab(self.aliases, 'Aliases')
 
         # Add buttons to this dialog
@@ -66,6 +66,10 @@ class Preferences(QDialog):
 
         self.buttons.clicked.connect(self.btn_clicked)
         layout.addWidget(self.buttons)
+
+        # Set initial width wider to accommodate the aliases tab
+        self.resize(self.aliases.sizeHint().width(),
+                    self.sizeHint().height())
 
     def _get_config_tab(self) -> QWidget:
         """
@@ -99,14 +103,16 @@ class Preferences(QDialog):
 
     def _get_aliases_tab(self) -> QWidget:
         """
-        Create the layout for the aliases tab of the dialog.
+        Create the layout/widget for the aliases tab of the dialog.
 
         Returns:
             The layout.
         """
 
-        # Create layout
+        # Create layout and enclosing widget
+        widget = QWidget()
         layout = QVBoxLayout()
+        widget.setLayout(layout)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         # Add header
@@ -117,7 +123,18 @@ class Preferences(QDialog):
         aliases = AliasList()
         layout.addWidget(aliases)
 
-        return layout
+        # Add buttons
+        btn_lyt = QHBoxLayout()
+        add_track = QPushButton('Add Track')
+        add_track.clicked.connect(lambda: aliases.new_entry(True))
+        add_artist = QPushButton('Add Artist')
+        add_artist.clicked.connect(lambda: aliases.new_entry(False))
+        btn_lyt.setAlignment(Qt.AlignmentFlag.AlignRight)
+        btn_lyt.addWidget(add_track)
+        btn_lyt.addWidget(add_artist)
+        layout.addLayout(btn_lyt)
+
+        return widget
 
     def btn_clicked(self, btn) -> None:
         """
@@ -257,9 +274,9 @@ class AliasList(QListWidget):
         super().__init__()
 
         self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
 
-        self.new_entry(True)
-        self.new_entry(False)
+        # Add initial alias entry
         self.new_entry(True)
 
     def new_entry(self, include_track: bool = False) -> None:
@@ -274,19 +291,36 @@ class AliasList(QListWidget):
             None
         """
 
-        entry = AliasEntry(include_track)
         item = QListWidgetItem(self)
+        entry = AliasEntry(self, item, include_track)
         item.setSizeHint(entry.sizeHint())
         self.addItem(item)
         self.setItemWidget(item, entry)
 
+        self.scrollToBottom()
 
 
 class AliasEntry(QWidget):
-    def __init__(self, include_track: bool):
+    def __init__(self,
+                 alias_list: AliasList,
+                 item: QListWidgetItem,
+                 include_track: bool):
+        """
+        Create an entry for the aliases list.
+
+        Args:
+            alias_list: The list containing this entry.
+            item: The list item to which this widget will be attached. This
+                  is used if the user removes this entry from the list.
+            include_track: This determines whether a field for the track name
+                           should be included. If it's False, there will only
+                           be fields for the artist name.
+        """
         super().__init__()
 
+        self.alias_list = alias_list
         self.include_track = include_track
+        self.item = item
 
         # Create layouts
         lyt = QHBoxLayout()
@@ -295,25 +329,25 @@ class AliasEntry(QWidget):
         lyt.addLayout(lyt_from)
         lyt.addLayout(lyt_to)
 
-        field_from_artist = QLineEdit()
-        field_from_artist.setPlaceholderText('Artist')
-        field_to_artist = QLineEdit()
-        field_to_artist.setPlaceholderText('Artist')
+        self.field_from_artist = QLineEdit()
+        self.field_from_artist.setPlaceholderText('Artist')
+        self.field_to_artist = QLineEdit()
+        self.field_to_artist.setPlaceholderText('Artist')
 
         lyt_from.addWidget(QLabel('Change'))
         lyt_to.addWidget(QLabel('to'))
 
-        lyt_from.addWidget(field_from_artist)
-        lyt_to.addWidget(field_to_artist)
+        lyt_from.addWidget(self.field_from_artist)
+        lyt_to.addWidget(self.field_to_artist)
 
         if self.include_track:
-            field_from_track = QLineEdit()
-            field_from_track.setPlaceholderText('Track')
-            field_to_track = QLineEdit()
-            field_to_track.setPlaceholderText('Track')
+            self.field_from_track = QLineEdit()
+            self.field_from_track.setPlaceholderText('Track')
+            self.field_to_track = QLineEdit()
+            self.field_to_track.setPlaceholderText('Track')
 
-            lyt_from.addWidget(field_from_track)
-            lyt_to.addWidget(field_to_track)
+            lyt_from.addWidget(self.field_from_track)
+            lyt_to.addWidget(self.field_to_track)
 
         # Add button
         btn = CancelBtn(self.remove_row)
@@ -322,7 +356,26 @@ class AliasEntry(QWidget):
         self.setLayout(lyt)
 
     def remove_row(self) -> None:
-        print('remove row')
+        """
+        This is called when the user clicks the 'X' in the alias entry. If
+        this is not the only row in the list, then this row is deleted from
+        the list.
+
+        But if this is the last row left, then instead of being deleted,
+        it is merely cleared. That way there's always at least one row.
+
+        Returns:
+            None
+        """
+
+        if self.alias_list.count() > 1:
+            self.alias_list.takeItem(self.alias_list.row(self.item))
+        else:
+            self.field_from_artist.clear()
+            self.field_to_artist.clear()
+            if self.include_track:
+                self.field_from_track.clear()
+                self.field_to_track.clear()
 
 
 def delete_items_of_layout(layout: QLayout) -> None:
