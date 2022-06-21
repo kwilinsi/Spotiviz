@@ -1,4 +1,6 @@
-from typing import List
+from __future__ import annotations
+
+from typing import List, Optional
 
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtWidgets import (
@@ -8,9 +10,11 @@ from PyQt6.QtWidgets import (
     QListWidgetItem, QAbstractItemView
 )
 
-from sqlalchemy import update
+from sqlalchemy import update, delete, select
 
-from spotiviz.database.structure.project_struct import Config as ConfigTbl
+from spotiviz.database.structure.project_struct import (
+    Aliases, Config as ConfigTbl
+)
 
 from spotiviz.projects.structure.project_class import Project
 from spotiviz.projects.structure.config.properties import Config
@@ -40,6 +44,7 @@ class Preferences(QDialog):
 
         self.project = project
         self.fields: List[ConfigField] = []
+        self.alias_list: AliasList = None
 
         self.setWindowTitle('Preferences')
 
@@ -120,15 +125,15 @@ class Preferences(QDialog):
         layout.addWidget(head)
 
         # Add contents
-        aliases = AliasList()
-        layout.addWidget(aliases)
+        self.alias_list = AliasList(self.project)
+        layout.addWidget(self.alias_list)
 
         # Add buttons
         btn_lyt = QHBoxLayout()
         add_track = QPushButton('Add Track')
-        add_track.clicked.connect(lambda: aliases.new_entry(True))
+        add_track.clicked.connect(lambda: self.alias_list.new_entry(True))
         add_artist = QPushButton('Add Artist')
-        add_artist.clicked.connect(lambda: aliases.new_entry(False))
+        add_artist.clicked.connect(lambda: self.alias_list.new_entry(False))
         btn_lyt.setAlignment(Qt.AlignmentFlag.AlignRight)
         btn_lyt.addWidget(add_track)
         btn_lyt.addWidget(add_artist)
@@ -147,31 +152,56 @@ class Preferences(QDialog):
 
         role = self.buttons.buttonRole(btn)
 
+        # If 'Apply' or 'Ok' were clicked, apply any changes
         if role == QDialogButtonBox.ButtonRole.AcceptRole or \
                 role == QDialogButtonBox.ButtonRole.ApplyRole:
-
-            # Identify the fields that changed
-            changed = [f for f in self.fields if f.has_changed]
-
-            # If any fields changed, update them
-            if changed:
-                with self.project.open_session() as session:
-                    for field in changed:
-                        session.execute(
-                            update(ConfigTbl).
-                            where(ConfigTbl.key == field.config.name).
-                            values(value=field.current_value)
-                        )
-                        field.on_apply()
-                    session.commit()
-
-                # Forcibly reload the project config from the database
-                self.project.config.read_from_db()
+            self.apply_changes()
 
         # If 'Ok' or 'Cancel' were clicked, close the dialog
         if role == QDialogButtonBox.ButtonRole.AcceptRole or \
                 role == QDialogButtonBox.ButtonRole.RejectRole:
             self.close()
+
+    def apply_changes(self) -> None:
+        """
+        This function is called whenever the user clicks the 'Apply' or 'Ok'
+        buttons in the dialog. It looks for any changes the user made and
+        saves them to the database.
+
+        Returns:
+            None
+        """
+
+        # Find any config fields that changed
+        config_changed = [f for f in self.fields if f.has_changed]
+
+        # If anything changed, update it
+        with self.project.open_session() as session:
+            for field in config_changed:
+                session.execute(
+                    update(ConfigTbl).
+                    where(ConfigTbl.key == field.config.name).
+                    values(value=field.current_value)
+                )
+                field.save_state()
+
+            # If any alias changed, just reload them all, because it's too
+            # hard to make selective changes.
+            if self.alias_list.has_changed():
+                # Clear the table
+                session.execute(delete(Aliases))
+                # Add alias objects
+                for e in self.alias_list.entries():
+                    if e.has_contents():
+                        print(f'sql: {e.to_sql_object()}')
+                        session.add(e.to_sql_object())
+
+                self.alias_list.save_changes()
+
+            session.commit()
+
+        # Forcibly reload the project config from the database
+        self.project.config.read_from_db()
 
 
 class ConfigField(QHBoxLayout):
@@ -196,8 +226,7 @@ class ConfigField(QHBoxLayout):
 
         Args:
             config: The config property.
-            preferences_dialog: The preferences dialog instance to which
-            this
+            preferences_dialog: The preferences dialog instance to which this
                                 field belongs.
             project: The project the user is working on.
         """
@@ -255,11 +284,10 @@ class ConfigField(QHBoxLayout):
         self.current_value = self.field.text()
         self.has_changed = self.current_value != self.initial_value
 
-    def on_apply(self) -> None:
+    def save_state(self) -> None:
         """
-        This function is called when the user clicks the 'Apply' or 'Ok'
-        buttons. Since self.current_value has now been pushed to the
-        database, self.initial_value is reset to that value.
+        Save the current state of this entry as the new 'initial' state.
+        This basically resets self.has_changed to False.
 
         Returns:
             None
@@ -270,34 +298,130 @@ class ConfigField(QHBoxLayout):
 
 
 class AliasList(QListWidget):
-    def __init__(self):
+    """
+    This widget contains the entire scrollable list of AliasEntries. The user
+    can add new aliases to this list and remove or modify existing ones. When
+    the preferences dialog is loaded, this is populated with the aliases
+    currently saved in the project database.
+    """
+
+    def __init__(self, project: Project):
+        """
+        Create the AliasList.
+
+        Args:
+            project: The project the user has open.
+        """
+
         super().__init__()
 
+        # This tracks whether any items in the list were deleted
+        self.any_deleted: bool = False
+
         self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
-        self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
 
         # Add initial alias entry
-        self.new_entry(True)
+        with project.open_session() as session:
+            aliases = session.scalars(select(Aliases))
+            for alias in aliases:
+                self.new_entry(alias.from_track is not None,
+                               alias.from_artist,
+                               alias.from_track,
+                               alias.to_artist,
+                               alias.to_track)
 
-    def new_entry(self, include_track: bool = False) -> None:
+        # If there's no aliases, add an empty one
+        if not self.count():
+            self.new_entry(True)
+
+        # Get a copy of the current list of entries to check for changes later
+        self.initial_list = self.entries().copy()
+
+    def new_entry(self,
+                  include_track: bool,
+                  from_artist: str = '',
+                  from_track: str = '',
+                  to_artist: str = '',
+                  to_track: str = '') -> None:
         """
         Add a new item to this list.
 
         Args:
             include_track: True iff a field for the track name should be
                            included.
+            from_artist: The name of the artist to change.
+            from_track: The name of the track to change.
+            to_artist: The new name for the artist.
+            to_track: The new name for the track.
 
         Returns:
             None
         """
 
         item = QListWidgetItem(self)
-        entry = AliasEntry(self, item, include_track)
+        entry = AliasEntry(self,
+                           item,
+                           include_track,
+                           from_artist=from_artist,
+                           from_track=from_track,
+                           to_artist=to_artist,
+                           to_track=to_track)
         item.setSizeHint(entry.sizeHint())
         self.addItem(item)
         self.setItemWidget(item, entry)
 
         self.scrollToBottom()
+
+    def entries(self) -> List[AliasEntry]:
+        """
+        Get a list of all the alias entries associated with this list.
+        
+        Returns:
+            A list of alias entries.
+        """
+
+        return [self.itemWidget(self.item(i))
+                for i in range(self.count())]
+
+    def has_changed(self) -> bool:
+        """
+        Determine whether any of the alias entries have changed from their
+        original state. If they have, return True. Otherwise, return False.
+
+        Returns:
+            True iff at least one alias entry was changed (or deleted) by the
+            user.
+        """
+
+        if self.any_deleted:
+            return True
+
+        entries = self.entries()
+
+        # This could indicate reordering
+        if entries != self.initial_list:
+            return True
+
+        for e in entries:
+            if e.has_changed():
+                return True
+        return False
+
+    def save_changes(self) -> None:
+        """
+        After the user clicks 'Apply' or 'Ok', save the current state of all
+        the fields as their new initial state to properly detect future
+        changes.
+
+        Returns:
+            None
+        """
+
+        self.any_deleted = False
+        self.initial_list = self.entries().copy()
+        for e in self.initial_list:
+            e.save_changes()
 
     def sizeHint(self) -> QSize:
         """
@@ -313,11 +437,43 @@ class AliasList(QListWidget):
                      super().sizeHint().height())
 
 
+class AliasLineEdit(QLineEdit):
+    def __init__(self,
+                 initial: str,
+                 placeholder: str):
+        """
+        Initialize a changeable line edit.
+
+        Args:
+            initial: The initial text to display in the field.
+            placeholder: The placeholder text to show when the field is empty.
+        """
+
+        super().__init__(initial)
+
+        self.initial = initial
+        self.setPlaceholderText(placeholder)
+
+    def alias_text(self) -> Optional[str]:
+        """
+        Return the contents of this line edit, UNLESS it's empty, in which
+        case None is returned instead.
+
+        Returns:
+              The contents of this line edit, or None.
+        """
+        return self.text() if self.text() != '' else None
+
+
 class AliasEntry(QWidget):
     def __init__(self,
                  alias_list: AliasList,
                  item: QListWidgetItem,
-                 include_track: bool):
+                 include_track: bool,
+                 from_artist: str,
+                 from_track: str,
+                 to_artist: str,
+                 to_track: str):
         """
         Create an entry for the aliases list.
 
@@ -328,6 +484,10 @@ class AliasEntry(QWidget):
             include_track: This determines whether a field for the track name
                            should be included. If it's False, there will only
                            be fields for the artist name.
+            from_artist: The name of the artist to change.
+            from_track: The name of the track to change.
+            to_artist: The new name for the artist.
+            to_track: The new name for the track.
         """
         super().__init__()
 
@@ -342,10 +502,8 @@ class AliasEntry(QWidget):
         lyt.addLayout(lyt_from)
         lyt.addLayout(lyt_to)
 
-        self.field_from_artist = QLineEdit()
-        self.field_from_artist.setPlaceholderText('Artist')
-        self.field_to_artist = QLineEdit()
-        self.field_to_artist.setPlaceholderText('Artist')
+        self.field_from_artist = AliasLineEdit(from_artist, 'Artist')
+        self.field_to_artist = AliasLineEdit(to_artist, 'Artist')
 
         lyt_from.addWidget(QLabel('Change'))
         lyt_to.addWidget(QLabel('to'))
@@ -354,21 +512,89 @@ class AliasEntry(QWidget):
         lyt_to.addWidget(self.field_to_artist)
 
         if self.include_track:
-            self.field_from_track = QLineEdit()
-            self.field_from_track.setPlaceholderText('Track')
-            self.field_to_track = QLineEdit()
-            self.field_to_track.setPlaceholderText('Track')
+            self.field_from_track = AliasLineEdit(from_track, 'Track')
+            self.field_to_track = AliasLineEdit(to_track, 'Track')
 
             lyt_from.addWidget(self.field_from_track)
             lyt_to.addWidget(self.field_to_track)
 
         # Add button
-        btn = CancelBtn(self.remove_row)
+        btn = CancelBtn(self.delete_entry)
         lyt.addWidget(btn)
 
         self.setLayout(lyt)
 
-    def remove_row(self) -> None:
+    def has_contents(self) -> bool:
+        """
+        Determine whether this alias field has contents.
+
+        Returns:
+            True if and only if at least one of the fields has text in it.
+        """
+
+        if self.field_from_artist.text() or self.field_to_artist.text():
+            return True
+        if self.include_track:
+            if self.field_from_track.text() or self.field_to_track.text():
+                return True
+
+        return False
+
+    def has_changed(self) -> bool:
+        """
+        Determine whether the fields in this entry have been changed by the
+        user.
+
+        Returns:
+            True iff any of the fields were changed by the user.
+        """
+
+        if (self.field_from_artist.text() != self.field_from_artist.initial or
+                self.field_to_artist.text() != self.field_to_artist.initial):
+            return True
+        if self.include_track:
+            if (self.field_to_track.text() != self.field_to_track.initial or
+                    self.field_from_track.text() !=
+                    self.field_from_track.initial):
+                return True
+
+        return False
+
+    def save_changes(self) -> None:
+        """
+        After the user clicks 'Apply' or 'Ok', save the current state of all
+        the fields as their new initial state to properly detect future
+        changes.
+
+        Returns:
+            None
+        """
+
+        self.field_from_artist.initial = self.field_from_artist.text()
+        self.field_to_artist.initial = self.field_to_artist.text()
+        if self.include_track:
+            self.field_from_track.initial = self.field_from_track.text()
+            self.field_to_track.initial = self.field_to_track.text()
+
+    def to_sql_object(self) -> Aliases:
+        """
+        Create a SQLAlchemy object based on this AliasEntry in its current
+        state.
+
+        Returns:
+            An object for sending to the SQLite database.
+        """
+
+        return Aliases(
+            from_artist=self.field_from_artist.alias_text(),
+            from_track=(self.field_from_track.alias_text()
+                        if self.include_track else None),
+            to_artist=self.field_to_artist.alias_text(),
+            to_track=(self.field_to_track.alias_text()
+                      if self.include_track else None)
+        )
+
+    def delete_entry(self) -> None:
         """
         This is called when the user clicks the 'X' in the alias entry. If
         this is not the only row in the list, then this row is deleted from
@@ -380,6 +606,8 @@ class AliasEntry(QWidget):
         Returns:
             None
         """
+
+        self.alias_list.any_deleted = True
 
         if self.alias_list.count() > 1:
             self.alias_list.takeItem(self.alias_list.row(self.item))

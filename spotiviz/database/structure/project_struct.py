@@ -133,6 +133,28 @@ class StreamingHistoryRaw(Base, ReprModel):
                           ms_played=self.ms_played)
 
 
+class Aliases(Base, ReprModel):
+    """
+    The Aliases table records tracks and artists that should be renamed to
+    another artist or track.
+    """
+
+    __tablename__ = 'Aliases'
+
+    position: Column = Column(INTEGER, primary_key=True)
+    from_artist: Column = Column(TEXT, nullable=False)
+    from_track: Column = Column(TEXT)
+    to_artist: Column = Column(TEXT, nullable=False)
+    to_track: Column = Column(TEXT)
+
+    def __repr__(self) -> str:
+        return self._repr(position=self.position,
+                          from_artist=self.from_artist,
+                          from_track=self.from_track,
+                          to_artist=self.to_artist,
+                          to_track=self.to_track)
+
+
 class Artists(Base, ReprModel):
     """
     The Artists table is simply a list of artist names and ids (for smaller
