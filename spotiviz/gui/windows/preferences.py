@@ -320,6 +320,7 @@ class AliasList(QListWidget):
 
         self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.setAlternatingRowColors(True)
 
         # Add initial alias entry
         with project.open_session() as session:
@@ -494,6 +495,8 @@ class AliasEntry(QWidget):
         self.alias_list = alias_list
         self.include_track = include_track
         self.item = item
+
+        self.setContentsMargins(10, 0, 10, 0)
 
         # Create layouts
         lyt = QHBoxLayout()

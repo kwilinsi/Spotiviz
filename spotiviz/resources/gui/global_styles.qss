@@ -110,3 +110,8 @@ DownloadBtn:hover:!pressed {
 QScrollArea {
     border-radius: 0px;
 }
+
+AliasList {
+    alternate-background-color: #f0f0f0;
+    background-color: #ffffff;
+}
